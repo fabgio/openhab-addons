@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="merossiot"
+						  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						  xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+						  xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Bridge Type -->
+	<bridge-type id="merossiot">
+		<label>MerossIOT cloud</label>
+		<description>Meross cloud configuration</description>
+
+		<config-description>
+			<parameter name="apibaseurl" type="text" required="true">
+				<context>Meross URL</context>
+				<label>Meross URL</label>
+				<description>The URL of the Meross cloud</description>
+			</parameter>
+			<parameter name="password" type="text" required="true">
+				<context>password</context>
+				<label>Password</label>
+				<description>The Meross cloud registration password</description>
+			</parameter>
+			<parameter name="email" type="text" required="true">
+				<context>email-address</context>
+				<label>E-mail address</label>
+				<description>The Meross cloud registration e-mail address</description>
+			</parameter>
+		</config-description>
+	</bridge-type>
+
+	<thing-type id="smartPlug">
+		<label>Smart Plug</label>
+		<description>Meross Smart plug</description>
+		<channels>
+			<channel id="togglex" typeId="togglex"/>
+		</channels>
+	</thing-type>
+	<channel-type id="togglex">
+		<kind>switch</kind>
+		<label>switch channel</label>
+		<state>
+			<options>
+				<option value="OFF">Off</option>
+				<option value="ON">On</option>
+			</options>
+		</state>
+	</channel-type>
+</thing:thing-descriptions>
