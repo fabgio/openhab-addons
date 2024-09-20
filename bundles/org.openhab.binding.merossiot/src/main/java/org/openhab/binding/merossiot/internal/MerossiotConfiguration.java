@@ -15,12 +15,12 @@ package org.openhab.binding.merossiot.internal;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * The {@link merossiotConfiguration} class contains fields mapping thing configuration parameters.
+ * The {@link MerossiotConfiguration} class contains fields mapping thing configuration parameters.
  *
  * @author Giovanni Fabiani - Initial contribution
  */
 @NonNullByDefault
-public class merossiotConfiguration {
+public class MerossiotConfiguration {
 
     /**
      * Sample configuration parameters. Replace with your own.

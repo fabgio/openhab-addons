@@ -12,8 +12,6 @@
  */
 package org.openhab.binding.merossiot.internal;
 
-import static org.openhab.binding.merossiot.internal.merossiotBindingConstants.*;
-
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
@@ -25,26 +23,28 @@ import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.openhab.binding.merossiot.internal.MerossiotBindingConstants.TOGGLEX;
+
 /**
- * The {@link merossiotHandler} is responsible for handling commands, which are
+ * The {@link MerossiotBridgeHandler} is responsible for handling commands, which are
  * sent to one of the channels.
  *
  * @author Giovanni Fabiani - Initial contribution
  */
 @NonNullByDefault
-public class merossiotHandler extends BaseThingHandler {
+public class MerossiotBridgeHandler extends BaseThingHandler {
 
-    private final Logger logger = LoggerFactory.getLogger(merossiotHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(MerossiotBridgeHandler.class);
 
-    private @Nullable merossiotConfiguration config;
+    private @Nullable MerossiotConfiguration config;
 
-    public merossiotHandler(Thing thing) {
+    public MerossiotBridgeHandler(Thing thing) {
         super(thing);
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (CHANNEL_1.equals(channelUID.getId())) {
+        if (TOGGLEX.equals(channelUID.getId())) {
             if (command instanceof RefreshType) {
                 // TODO: handle data refresh
             }
@@ -60,7 +60,7 @@ public class merossiotHandler extends BaseThingHandler {
 
     @Override
     public void initialize() {
-        config = getConfigAs(merossiotConfiguration.class);
+        config = getConfigAs(MerossiotConfiguration.class);
 
         // TODO: Initialize the handler.
         // The framework requires you to return from this method quickly, i.e. any network access must be done in

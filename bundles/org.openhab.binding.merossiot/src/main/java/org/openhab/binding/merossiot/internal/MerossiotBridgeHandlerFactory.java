@@ -12,9 +12,7 @@
  */
 package org.openhab.binding.merossiot.internal;
 
-import static org.openhab.binding.merossiot.internal.merossiotBindingConstants.*;
-
-import java.util.Set;
+import static org.openhab.binding.merossiot.internal.MerossiotBindingConstants.*;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -26,16 +24,14 @@ import org.openhab.core.thing.binding.ThingHandlerFactory;
 import org.osgi.service.component.annotations.Component;
 
 /**
- * The {@link merossiotHandlerFactory} is responsible for creating things and thing
+ * The {@link MerossiotBridgeHandlerFactory} is responsible for creating things and thing
  * handlers.
  *
  * @author Giovanni Fabiani - Initial contribution
  */
 @NonNullByDefault
 @Component(configurationPid = "binding.merossiot", service = ThingHandlerFactory.class)
-public class merossiotHandlerFactory extends BaseThingHandlerFactory {
-
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_SAMPLE);
+public class MerossiotBridgeHandlerFactory extends BaseThingHandlerFactory {
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -46,8 +42,8 @@ public class merossiotHandlerFactory extends BaseThingHandlerFactory {
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (THING_TYPE_SAMPLE.equals(thingTypeUID)) {
-            return new merossiotHandler(thing);
+        if (THING_TYPE_MEROSSIOT.equals(thingTypeUID)) {
+            return new MerossiotBridgeHandler(thing);
         }
 
         return null;
