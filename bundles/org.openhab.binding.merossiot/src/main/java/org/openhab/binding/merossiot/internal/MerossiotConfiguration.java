@@ -25,7 +25,7 @@ public class MerossiotConfiguration {
     /**
      * Sample configuration parameters. Replace with your own.
      */
-    public String hostname = "";
+    public String apibaseUrl = "";
+    public String email = "";
     public String password = "";
-    public int refreshInterval = 600;
 }

@@ -12,13 +12,10 @@
  */
 package org.openhab.binding.merossiot.internal;
 
+import java.util.Set;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.thing.ThingTypeUID;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * The {@link MerossiotBindingConstants} class defines common constants, which are
@@ -32,10 +29,10 @@ public class MerossiotBindingConstants {
     private static final String BINDING_ID = "merossiot";
 
     // List of all Thing Type UIDs
-    public static final ThingTypeUID THING_TYPE_MEROSSIOT = new ThingTypeUID(BINDING_ID, "merossiot");
+    public static final ThingTypeUID THING_TYPE_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
+    public static final ThingTypeUID THING_TYPE_SMART_PLUG = new ThingTypeUID(BINDING_ID, "smartPlug");
 
-    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream.of(
-            new ThingTypeUID(BINDING_ID,"smartPlug")).collect(Collectors.toSet()));
+    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Set.of(THING_TYPE_BRIDGE, THING_TYPE_SMART_PLUG);
     // List of all Channel ids
-    public static final String TOGGLEX = "togglex";
+    public static final String CHANNEL_TOGGLEX = "togglex";
 }
