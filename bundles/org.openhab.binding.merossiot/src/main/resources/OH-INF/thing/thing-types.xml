@@ -5,7 +5,7 @@
 	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
 	<!-- Bridge Type -->
-	<bridge-type id="merossiot">
+	<bridge-type id="MerossIOT">
 		<label>MerossIOT cloud</label>
 		<description>Meross cloud configuration</description>
 
@@ -36,13 +36,8 @@
 		</channels>
 	</thing-type>
 	<channel-type id="togglex">
-		<kind>switch</kind>
-		<label>switch channel</label>
-		<state>
-			<options>
-				<option value="OFF">Off</option>
-				<option value="ON">On</option>
-			</options>
-		</state>
+		<item-type>Switch</item-type>
+		<label>Switch</label>
+		<description>Switches the power ON and OFF</description>
 	</channel-type>
 </thing:thing-descriptions>

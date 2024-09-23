@@ -12,7 +12,7 @@
 
   <artifactId>org.openhab.binding.merossiot</artifactId>
 
-  <name>openHAB Add-ons :: Bundles :: merossiot Binding</name>
+  <name>openHAB Add-ons :: Bundles :: MerossIOT Binding</name>
 
   <dependencies>
     <dependency>

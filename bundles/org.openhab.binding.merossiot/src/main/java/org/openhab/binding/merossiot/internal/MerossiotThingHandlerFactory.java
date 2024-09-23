@@ -25,7 +25,7 @@ import org.openhab.core.thing.binding.ThingHandlerFactory;
 import org.osgi.service.component.annotations.Component;
 
 /**
- * The {@link MerossiotThingHandlerFactory} is responsible for creating things and thing
+ * The {@link MerossiotThingHandlerFactory} is responsible for creating Meross things and MerossIOT thing
  * handlers.
  *
  * @author Giovanni Fabiani - Initial contribution
