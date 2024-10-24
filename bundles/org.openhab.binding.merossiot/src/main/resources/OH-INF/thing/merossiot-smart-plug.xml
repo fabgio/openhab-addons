@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="flume"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<thing-type id="smart-plug">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="cloud"/>
+		</supported-bridge-type-refs>
+
+		<label>Meross Smart plug</label>
+		<description>Meross Smart plug</description>
+
+		<channels>
+			<channel id="togglex" typeId="togglex"/>
+		</channels>
+		<representation-property>id</representation-property>
+		<channel-type id="togglex">
+			<item-type>Switch</item-type>
+			<label>Switch</label>
+			<description>Switches the power ON and OFF</description>
+		</channel-type>
+	</thing-type>
+</thing:thing-descriptions>
