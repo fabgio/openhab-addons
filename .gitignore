@@ -31,3 +31,4 @@ pom.xml.versionsBackup
 shell.nix
 tags
 /bundles/org.openhab.binding.meross/task.ps1
+/bundles/org.openhab.binding.meross/src/test/

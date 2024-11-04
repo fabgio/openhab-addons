@@ -15,12 +15,7 @@ package org.openhab.binding.meross.internal.dto;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * @param token The token issued by the Meross cloud
- * @param key The key issued by the Meross cloud
- * @param userId The userid
- * @param userEmail the user's email
- * @param domain The Meross cloud http domain
- * @param mqttDomain he Meross cloud http domain
+ * The {@link CloudCredentials} class is a record holding cloud credentials 's components
  *
  * @author Giovanni Fabiani - Initial contribution
  */

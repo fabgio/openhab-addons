@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.meross.internal.utils;
+package org.openhab.binding.meross.internal.api;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -20,13 +20,13 @@ import java.security.NoSuchAlgorithmException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * The {@link MD5Utils} is responsible for generating the MD5 hash
+ * The {@link MD5Util} is responsible for generating the MD5 hash
  *
  *
  * @author Christian Feininger - Initial contribution
  */
 @NonNullByDefault
-public class MD5Utils {
+public class MD5Util {
 
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
@@ -56,7 +56,7 @@ public class MD5Utils {
      */
     public static String getMD5String(String input) {
         if (input != null) {
-            byte[] md5InBytes = MD5Utils.digest(input.getBytes(UTF_8));
+            byte[] md5InBytes = MD5Util.digest(input.getBytes(UTF_8));
             return bytesToHex(md5InBytes);
         }
         return "";

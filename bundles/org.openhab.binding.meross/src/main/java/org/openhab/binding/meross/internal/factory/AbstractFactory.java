@@ -10,20 +10,16 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.meross.internal.exceptions;
+package org.openhab.binding.meross.internal.factory;
+
+import org.openhab.binding.meross.internal.command.Command;
 
 /**
- * Meross API exception
+ * The {@link AbstractFactory} class is responsible for implementing command mode
+ *
  *
  * @author Giovanni Fabiani - Initial contribution
- *
  */
-public class MerossException extends Exception {
-    public MerossException(String message) {
-        super(message);
-    }
-
-    public MerossException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public abstract class AbstractFactory {
+    public abstract Command commandMode(String mode);
 }
