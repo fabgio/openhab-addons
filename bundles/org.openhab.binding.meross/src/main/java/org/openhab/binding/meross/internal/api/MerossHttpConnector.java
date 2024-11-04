@@ -36,8 +36,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.openhab.binding.meross.internal.dto.CloudCredentials;
 import org.openhab.binding.meross.internal.dto.Device;
-import org.openhab.binding.meross.internal.exceptions.MerossException;
-import org.openhab.binding.meross.internal.utils.MD5Utils;
 import org.openhab.core.OpenHAB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,10 +83,9 @@ public class MerossHttpConnector {
             encodedParams = encodeParams(paramsData);
         } else {
             throw new MerossException("Parameter data map is null");
-
         }
         dataToSign = "%s%d%s%s".formatted(INITIAL_STRING, timestamp, nonce, encodedParams);
-        String md5hash = MD5Utils.getMD5String(dataToSign);
+        String md5hash = MD5Util.getMD5String(dataToSign);
         Map<String, String> payloadMap = new HashMap<>();
         payloadMap.put("params", encodedParams);
         payloadMap.put("sign", md5hash);
@@ -147,7 +144,7 @@ public class MerossHttpConnector {
         }
     }
 
-    private ArrayList<Device> fetchDevicesImpl() {
+    ArrayList<Device> fetchDevicesImpl() {
         String token = fetchCredentialsImpl().token();
         setToken(token);
         try {
@@ -169,8 +166,8 @@ public class MerossHttpConnector {
      * @return The device UUID
      */
     public String getDevUUIDByDevName(String devName) {
-        return fetchDevicesImpl().stream().filter(device -> device.devName().equals(devName)).map(Device::uuid)
-                .findFirst().orElseThrow(() -> new RuntimeException("No device found with name: " + devName));
+        return getDevices().stream().filter(device -> device.devName().equals(devName)).map(Device::uuid).findFirst()
+                .orElseThrow(() -> new RuntimeException("No device found with name: " + devName));
     }
 
     /**
@@ -178,7 +175,7 @@ public class MerossHttpConnector {
      * @return The device's status
      */
     public int getDevStatusByDevName(String devName) {
-        return fetchDevicesImpl().stream().filter(device -> device.devName().equals(devName)).map(Device::onlineStatus)
+        return getDevices().stream().filter(device -> device.devName().equals(devName)).map(Device::onlineStatus)
                 .findFirst().orElseThrow(() -> new RuntimeException("No device found with name: " + devName));
     }
 

@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.openhab.binding.meross.internal.utils.MD5Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +32,8 @@ import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
 import com.hivemq.client.mqtt.mqtt5.message.subscribe.Mqtt5Subscribe;
 
 /**
- * The {@link MerossMqttConnector} class is responsible for connecting to the Meross broker i.e. building
- * and publishing MQTT messages.
+ * The {@link MerossMqttConnector} class is responsible for building
+ * and publishing MQTT messages along with connecting to the Meross broker.
  *
  * @author Giovanni Fabiani - Initial contribution
  */
@@ -50,9 +49,14 @@ public class MerossMqttConnector {
     private static String destinationDeviceUUID;
     private static String incomingResponse;
 
+    /**
+     * @param message
+     * @param requestTopic
+     * @return
+     */
     public static String publishMqttMessage(byte[] message, String requestTopic) {
         String clearPassword = "%s%s".formatted(userId, key);
-        String hashedPassword = MD5Utils.getMD5String(clearPassword);
+        String hashedPassword = MD5Util.getMD5String(clearPassword);
         Mqtt5BlockingClient client = Mqtt5Client.builder().identifier(clientId).serverHost(brokerAddress)
                 .serverPort(SECURE_WEB_SOCKET_PORT).sslWithDefaultConfig().buildBlocking();
 
@@ -98,9 +102,9 @@ public class MerossMqttConnector {
     public static byte[] buildMqttMessage(String method, String namespace, Map<String, Object> payload) {
         int timestamp = Math.round(Instant.now().getEpochSecond());
         String randomString = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        String messageId = MD5Utils.getMD5String(randomString.toLowerCase());
+        String messageId = MD5Util.getMD5String(randomString.toLowerCase());
         String signatureToHash = "%s%s%d".formatted(messageId, key, timestamp);
-        String signature = MD5Utils.getMD5String(signatureToHash).toLowerCase();
+        String signature = MD5Util.getMD5String(signatureToHash).toLowerCase();
         Map<String, Object> headerMap = new HashMap<>();
         Map<String, Object> dataMap = new HashMap<>();
         headerMap.put("from", buildClientResponseTopic());
@@ -131,7 +135,7 @@ public class MerossMqttConnector {
     public static String buildAppId() {
         String randomString = "API" + UUID.randomUUID();
         String encodedString = StandardCharsets.UTF_8.encode(randomString).toString();
-        return MD5Utils.getMD5String(encodedString);
+        return MD5Util.getMD5String(encodedString);
     }
 
     /**
