@@ -1,0 +1,67 @@
+/**
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+package org.openhab.binding.meross.internal.handler;
+
+import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.binding.meross.internal.api.MerossEnum;
+import org.openhab.binding.meross.internal.api.MerossHttpConnector;
+import org.openhab.binding.meross.internal.config.MerossBridgeConfiguration;
+import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.binding.BaseBridgeHandler;
+import org.openhab.core.types.Command;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * The {@link MerossBridgeHandler} is responsible for handling http communication with Meross Host.
+ *
+ * @author Giovanni Fabiani - Initial contribution
+ */
+public class MerossBridgeHandler extends BaseBridgeHandler {
+    private final Logger logger = LoggerFactory.getLogger(MerossBridgeHandler.class);
+    private @Nullable MerossBridgeConfiguration config;
+    static MerossHttpConnector sConnector;
+
+    public MerossBridgeHandler(Thing thing) {
+        super((Bridge) thing);
+    }
+
+    @Override
+    public void initialize() {
+        config = getConfigAs(MerossBridgeConfiguration.class);
+        scheduler.execute(() -> {
+            sConnector = new MerossHttpConnector(config.hostname, config.username, config.password);
+            int statusCode = sConnector.login().statusCode();
+            int errorCode = sConnector.errorCode();
+            String errorMessage = MerossEnum.ErrorCode.getMessageByErrorCode(errorCode);
+            if (statusCode != 200) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Communication error");
+                logger.warn("Communication resulted in status code {}", statusCode);
+            } else if (errorCode != MerossEnum.ErrorCode.OK.getValue()) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, errorMessage);
+                logger.warn("Communication resulted in error code {} with message {}", errorCode, errorMessage);
+            } else {
+                updateStatus(ThingStatus.ONLINE);
+                logger.info("Successfully logged in");
+            }
+        });
+    }
+
+    @Override
+    public void handleCommand(ChannelUID channelUID, Command command) {
+    }
+}

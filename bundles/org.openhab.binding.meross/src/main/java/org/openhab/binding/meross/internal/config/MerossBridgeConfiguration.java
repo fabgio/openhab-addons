@@ -10,22 +10,18 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.meross.internal;
+package org.openhab.binding.meross.internal.config;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * The {@link MerossConfiguration} class contains fields mapping thing configuration parameters.
+ * The {@link MerossBridgeConfiguration} class contains fields mapping bridge configuration parameters.
  *
- * @author Author - Initial contribution
+ * @author Giovanni Fabiani - Initial contribution
  */
 @NonNullByDefault
-public class MerossConfiguration {
-
-    /**
-     * Sample configuration parameters. Replace with your own.
-     */
+public class MerossBridgeConfiguration {
     public String hostname = "";
     public String password = "";
-    public int refreshInterval = 600;
+    public String username = "";
 }

@@ -18,6 +18,8 @@ import java.util.Set;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.binding.meross.internal.handler.MerossBridgeHandler;
+import org.openhab.binding.meross.internal.handler.MerossBulbAndPlugHandler;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.binding.BaseThingHandlerFactory;
@@ -29,13 +31,14 @@ import org.osgi.service.component.annotations.Component;
  * The {@link MerossHandlerFactory} is responsible for creating things and thing
  * handlers.
  *
- * @author Author - Initial contribution
+ * @author Giovanni Fabiani - Initial contribution
  */
 @NonNullByDefault
 @Component(configurationPid = "binding.meross", service = ThingHandlerFactory.class)
 public class MerossHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_SAMPLE);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_BRIDGE,
+            THING_TYPE_BULB_AND_PLUG);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -46,8 +49,10 @@ public class MerossHandlerFactory extends BaseThingHandlerFactory {
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (THING_TYPE_SAMPLE.equals(thingTypeUID)) {
-            return new MerossHandler(thing);
+        if (THING_TYPE_BRIDGE.equals(thingTypeUID)) {
+            return new MerossBridgeHandler(thing);
+        } else if (THING_TYPE_BULB_AND_PLUG.equals(thingTypeUID)) {
+            return new MerossBulbAndPlugHandler(thing);
         }
 
         return null;
