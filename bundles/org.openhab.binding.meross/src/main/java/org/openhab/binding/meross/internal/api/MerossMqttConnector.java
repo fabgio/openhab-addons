@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.openhab.binding.meross.internal.util.MD5Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +51,9 @@ public class MerossMqttConnector {
     private static String incomingResponse;
 
     /**
-     * @param message
-     * @param requestTopic
-     * @return
+     * @param message The mqtt message
+     * @param requestTopic The request topic
+     * @return The mqtt response
      */
     public static String publishMqttMessage(byte[] message, String requestTopic) {
         String clearPassword = "%s%s".formatted(userId, key);
@@ -60,8 +61,8 @@ public class MerossMqttConnector {
         Mqtt5BlockingClient client = Mqtt5Client.builder().identifier(clientId).serverHost(brokerAddress)
                 .serverPort(SECURE_WEB_SOCKET_PORT).sslWithDefaultConfig().buildBlocking();
 
-        client.connectWith().keepAlive(30).cleanStart(false).simpleAuth().username(userId)
-                .password(hashedPassword.getBytes(StandardCharsets.UTF_8)).applySimpleAuth().send();
+        client.connectWith().cleanStart(false).simpleAuth().username(userId)
+                .password(hashedPassword.getBytes(StandardCharsets.UTF_8)).applySimpleAuth().noSessionExpiry().send();
 
         Mqtt5Subscribe subscribeMessage = Mqtt5Subscribe.builder().addSubscription().topicFilter(buildClientUserTopic())
                 .qos(MqttQos.AT_LEAST_ONCE).applySubscription().addSubscription()
@@ -87,7 +88,8 @@ public class MerossMqttConnector {
                 }
             }
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            logger.debug("InterruptedException: {}", e.getMessage());
+
         }
         client.disconnect();
         return incomingResponse;

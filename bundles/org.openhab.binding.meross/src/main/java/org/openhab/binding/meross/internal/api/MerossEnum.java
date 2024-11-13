@@ -26,7 +26,7 @@ public class MerossEnum {
         LOGOUT("/v1/Profile/logout"),
         DEV_LIST("/v1/Device/devList");
 
-        public String getValue() {
+        public String value() {
             return value;
         }
 
@@ -114,7 +114,7 @@ public class MerossEnum {
         CONTROL_THERMOSTAT_MODE("Appliance.Control.Thermostat.Mode"),
         CONTROL_THERMOSTAT_WINDOWOPENED("Appliance.Control.Thermostat.WindowOpened");
 
-        public String getValue() {
+        public String value() {
             return value;
         }
 
@@ -125,12 +125,12 @@ public class MerossEnum {
         }
 
         public static String getAbilityValueByName(String name) {
-            return Stream.of(Namespace.values()).filter(p -> p.name().equals(name)).map(Namespace::getValue).findFirst()
+            return Stream.of(Namespace.values()).filter(p -> p.name().equals(name)).map(Namespace::value).findFirst()
                     .orElse("Unidentified Ability");
         }
     }
 
-    public enum ErrorCode {
+    public enum ApiStatusCode {
         OK(0),
         WRONG_OR_MISSING_USER(1000),
         WRONG_OR_MISSING_PASSWORD(1001),
@@ -143,21 +143,22 @@ public class MerossEnum {
         THIS_EMAIL_IS_NOT_REGISTERED(1008),
         SEND_EMAIL_FAILED(1009),
         WRONG_TICKET(1011),
-        CODE_TOKEN_ERROR(1022);
+        CODE_TOKEN_ERROR(1022),
+        TOO_MANY_TOKENS(1301);
 
-        public int getValue() {
+        public int value() {
             return value;
         }
 
         private final int value;
 
-        ErrorCode(int value) {
+        ApiStatusCode(int value) {
             this.value = value;
         }
 
-        public static String getMessageByErrorCode(int statusCode) {
-            return Stream.of(ErrorCode.values()).filter(s -> s.getValue() == statusCode).map(ErrorCode::name)
-                    .findFirst().orElse("Unidentified Http Error Message");
+        public static String getMessageByApiStatusCode(int statusCode) {
+            return Stream.of(ApiStatusCode.values()).filter(s -> s.value() == statusCode).map(ApiStatusCode::name)
+                    .findFirst().orElse("Unidentified Api Status Message");
         }
     }
 
@@ -174,7 +175,7 @@ public class MerossEnum {
             this.value = value;
         }
 
-        public int getValue() {
+        public int value() {
             return value;
         }
     }

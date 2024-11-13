@@ -30,8 +30,7 @@ public class TogglexCommand {
         @Override
         public byte[] commandType(String type) {
             Map<String, Object> payload = Map.of("togglex", Map.of("onoff", 1, "channel", 0));
-            return MerossMqttConnector.buildMqttMessage("SET", MerossEnum.Namespace.CONTROL_TOGGLEX.getValue(),
-                    payload);
+            return MerossMqttConnector.buildMqttMessage("SET", MerossEnum.Namespace.CONTROL_TOGGLEX.value(), payload);
         }
     }
 
@@ -39,8 +38,7 @@ public class TogglexCommand {
         @Override
         public byte[] commandType(String type) {
             Map<String, Object> payload = Map.of("togglex", Map.of("onoff", 0, "channel", 0));
-            return MerossMqttConnector.buildMqttMessage("SET", MerossEnum.Namespace.CONTROL_TOGGLEX.getValue(),
-                    payload);
+            return MerossMqttConnector.buildMqttMessage("SET", MerossEnum.Namespace.CONTROL_TOGGLEX.value(), payload);
         }
     }
 }
