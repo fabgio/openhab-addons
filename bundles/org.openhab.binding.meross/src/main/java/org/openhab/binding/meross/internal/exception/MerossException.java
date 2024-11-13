@@ -10,14 +10,23 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.meross.internal.dto;
+package org.openhab.binding.meross.internal.exception;
 
-import java.util.Map;
+import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * The {@link MQTTResponse} class contains the definition of the MQTT response
+ * Meross API exception
  *
  * @author Giovanni Fabiani - Initial contribution
+ *
  */
-public record MQTTResponse(Map<String, Object> map) {
+@NonNullByDefault
+public class MerossException extends Exception {
+    public MerossException(String message) {
+        super(message);
+    }
+
+    public MerossException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

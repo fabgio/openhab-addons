@@ -16,12 +16,12 @@ import org.openhab.binding.meross.internal.command.Command;
 import org.openhab.binding.meross.internal.command.TogglexCommand;
 
 /**
- * The {@link FactoryProvider} class is responsible for ior switching among different togglex modes
+ * The {@link TypeFactory} class is responsible for ior switching among different togglex modes
  *
  *
  * @author Giovanni Fabiani - Initial contribution
  */
-public class TogglexFactory extends AbstractFactory {
+public class TogglexFactory extends ModeFactory {
     @Override
     public Command commandMode(String mode) {
         return switch (mode) {

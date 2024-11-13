@@ -15,11 +15,11 @@ package org.openhab.binding.meross.internal.factory;
 import org.openhab.binding.meross.internal.command.Command;
 
 /**
- * The {@link AbstractFactory} class is responsible for implementing command mode
+ * The {@link ModeFactory} class is responsible for implementing command mode
  *
  *
  * @author Giovanni Fabiani - Initial contribution
  */
-public abstract class AbstractFactory {
+public abstract class ModeFactory {
     public abstract Command commandMode(String mode);
 }

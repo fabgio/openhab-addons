@@ -13,12 +13,13 @@
 package org.openhab.binding.meross.internal.handler;
 
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
+import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
-import org.openhab.binding.meross.internal.api.MerossManager;
 import org.openhab.binding.meross.internal.config.MerossBulbAndPlugConfiguration;
+import org.openhab.binding.meross.internal.manager.MerossBulbAndPlugManager;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
@@ -39,6 +40,8 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
+    private final String CONTROL_TOGGLEX_NAME = MerossEnum.Namespace.CONTROL_TOGGLEX.name();
+    private final MerossBulbAndPlugManager manager = new MerossBulbAndPlugManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
 
     public MerossBulbAndPlugHandler(Thing thing) {
@@ -53,39 +56,48 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             return;
         }
         config = getConfigAs(MerossBulbAndPlugConfiguration.class);
-        scheduler.execute(() -> {
-            int deviceStatus = MerossBridgeHandler.sConnector.getDevStatusByDevName(config.deviceName);
-            if (deviceStatus != MerossEnum.OnlineStatus.ONLINE.getValue()) {
-                updateStatus(ThingStatus.OFFLINE);
-                logger.info("Device is offline with code: {} reason: {} ", deviceStatus,
-                        MerossEnum.OnlineStatus.OFFLINE.name());
-            } else {
-                updateStatus(ThingStatus.ONLINE);
-                logger.info("Device is online with code: {} reason:  {}", deviceStatus,
-                        MerossEnum.OnlineStatus.ONLINE.name());
-            }
-        });
+        int deviceStatus = getHttpConnector().getDevStatusByDevName(config.deviceName);
+        logger.info("Device status code from connector: {}", deviceStatus);
+        logger.info("logging out from http connector");
+        getHttpConnector().logOut();
+        if (deviceStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
+            updateStatus(ThingStatus.OFFLINE);
+        } else {
+            updateStatus(ThingStatus.ONLINE);
+        }
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(CHANNEL_TOGGLEX)) {
-            logger.info("channel TOGGLEX");
-            if (command instanceof StringType) {
-                if (command.toString().equals("ON")) {
-                    logger.info("Toggled On");
-                    MerossManager.createMerossManager(MerossBridgeHandler.sConnector).executeCommand(config.deviceName,
-                            MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "ON");
-                } else if (command.toString().equals("OFF")) {
-                    logger.info("Toggled Off");
-                    MerossManager.createMerossManager(MerossBridgeHandler.sConnector).executeCommand(config.deviceName,
-                            MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "OFF");
-                }
-            } else {
-                logger.debug("Unsupported command {} for channel {}", command, channelUID);
-            }
+            handleTogglexChannel(channelUID, command);
         } else {
             logger.debug("Unsupported channelUID {}", channelUID);
         }
+    }
+
+    private void handleTogglexChannel(ChannelUID channelUID, Command command) {
+        logger.info("Channel togglex");
+        if (command instanceof StringType) {
+            switch (command.toString()) {
+                case "ON" -> {
+                    logger.info("Toggled On");
+                    manager.executeCommand(config.deviceName, CONTROL_TOGGLEX_NAME, "ON");
+                }
+                case "OFF" -> {
+                    logger.info("Toggled Off");
+                    manager.executeCommand(config.deviceName, CONTROL_TOGGLEX_NAME, "OFF");
+                }
+            }
+        } else {
+            logger.debug("Unsupported command {} for channel {}", command, channelUID);
+        }
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        logger.info("logging  out from http connector");
+        getHttpConnector().logOut();
     }
 }
