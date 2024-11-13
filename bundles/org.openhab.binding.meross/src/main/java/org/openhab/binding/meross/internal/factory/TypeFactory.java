@@ -13,13 +13,13 @@
 package org.openhab.binding.meross.internal.factory;
 
 /**
- * The {@link FactoryProvider} class is responsible for ior switching among different capabilities
+ * The {@link TypeFactory} class is responsible for ior switching among different capabilities
  *
  *
  * @author Giovanni Fabiani - Initial contribution
  */
-public class FactoryProvider {
-    public static AbstractFactory getFactory(String commandType) {
+public class TypeFactory {
+    public static ModeFactory getFactory(String commandType) {
         return switch (commandType) {
             case "CONTROL_TOGGLEX" -> new TogglexFactory();
             default -> throw new IllegalStateException("Unexpected value: " + commandType);

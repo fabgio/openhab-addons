@@ -31,10 +31,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Giovanni Fabiani - Initial contribution
  */
+
 public class MerossBridgeHandler extends BaseBridgeHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBridgeHandler.class);
     private @Nullable MerossBridgeConfiguration config;
-    static MerossHttpConnector sConnector;
+    private static MerossHttpConnector connector;
 
     public MerossBridgeHandler(Thing thing) {
         super((Bridge) thing);
@@ -44,16 +45,20 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
     public void initialize() {
         config = getConfigAs(MerossBridgeConfiguration.class);
         scheduler.execute(() -> {
-            sConnector = new MerossHttpConnector(config.hostname, config.username, config.password);
-            int statusCode = sConnector.login().statusCode();
-            int errorCode = sConnector.errorCode();
-            String errorMessage = MerossEnum.ErrorCode.getMessageByErrorCode(errorCode);
-            if (statusCode != 200) {
+            connector = new MerossHttpConnector(config.hostname, config.username, config.password);
+            setConnector(connector);
+            logger.info("Connector successfully set");
+            int httpStatusCode = getHttpConnector().login().statusCode();
+            int apiStatusCode = getHttpConnector().apiStatus();
+            logger.info("logging out from http connector");
+            getHttpConnector().logOut();
+            String apiMessage = MerossEnum.ApiStatusCode.getMessageByApiStatusCode(apiStatusCode);
+            if (httpStatusCode != 200) {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Communication error");
-                logger.warn("Communication resulted in status code {}", statusCode);
-            } else if (errorCode != MerossEnum.ErrorCode.OK.getValue()) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, errorMessage);
-                logger.warn("Communication resulted in error code {} with message {}", errorCode, errorMessage);
+                logger.warn("Communication resulted in status code {}", httpStatusCode);
+            } else if (apiStatusCode != MerossEnum.ApiStatusCode.OK.value()) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, apiMessage);
+                logger.warn("Communication resulted in error code {} with message {}", apiStatusCode, apiMessage);
             } else {
                 updateStatus(ThingStatus.ONLINE);
                 logger.info("Successfully logged in");
@@ -63,5 +68,20 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
+    }
+
+    public static void setConnector(MerossHttpConnector connector) {
+        MerossBridgeHandler.connector = connector;
+    }
+
+    public static MerossHttpConnector getHttpConnector() {
+        return connector;
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        logger.info("logging  out from http connector");
+        getHttpConnector().logOut();
     }
 }

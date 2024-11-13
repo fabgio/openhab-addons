@@ -54,7 +54,6 @@ public class MerossHandlerFactory extends BaseThingHandlerFactory {
         } else if (THING_TYPE_BULB_AND_PLUG.equals(thingTypeUID)) {
             return new MerossBulbAndPlugHandler(thing);
         }
-
         return null;
     }
 }
