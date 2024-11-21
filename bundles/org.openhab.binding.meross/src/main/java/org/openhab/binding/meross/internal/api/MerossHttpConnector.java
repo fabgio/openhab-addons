@@ -248,7 +248,7 @@ public class MerossHttpConnector {
         return devices;
     }
 
-    public void logOut() {
+    public void logout() {
         try {
             Objects.requireNonNull(
                     postResponse(Collections.emptyMap(), apiBaseUrl, MerossEnum.HttpEndpoint.LOGOUT.value()));

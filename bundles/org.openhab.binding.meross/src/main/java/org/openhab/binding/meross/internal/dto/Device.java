@@ -12,7 +12,6 @@
  */
 package org.openhab.binding.meross.internal.dto;
 
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -21,8 +20,7 @@ import com.google.gson.annotations.SerializedName;
  * @author Giovanni Fabiani - Initial contribution
  */
 public record Device(@SerializedName(value = "deviceType") String deviceType,
-        @SerializedName(value = "devIconId") String devIconId,
-        @Expose(serialize = false, deserialize = false) @SerializedName(value = "onlineStatus") int onlineStatus,
+        @SerializedName(value = "devIconId") String devIconId, @SerializedName(value = "onlineStatus") int onlineStatus,
         @SerializedName(value = "devName") String devName,
         @SerializedName(value = "fmwareVersion") String firmwareVersion, @SerializedName(value = "uuid") String uuid,
         @SerializedName(value = "userDevIcon") String userDeviceIcon, @SerializedName(value = "bindTime") long bindTime,
@@ -30,18 +28,4 @@ public record Device(@SerializedName(value = "deviceType") String deviceType,
         @SerializedName(value = "reservedDomain") String reservedDomain,
         @SerializedName(value = "subType") String subType, @SerializedName(value = "region") String region,
         @SerializedName(value = "hdwareVersion") String hardwareVersion) {
-    /**
-     *
-     */
-    public Device {
-    }
-
-    @Override
-    public String toString() {
-        return "Device[" + "deviceType=" + deviceType + ", " + "devIconId=" + devIconId + ", " + "onlineStatus="
-                + onlineStatus + ", " + "devName=" + devName + ", " + "firmwareVersion=" + firmwareVersion + ", "
-                + "uuid=" + uuid + ", " + "userDeviceIcon=" + userDeviceIcon + ", " + "bindTime=" + bindTime + ", "
-                + "iconType=" + iconType + ", " + "domain=" + domain + ", " + "reservedDomain=" + reservedDomain + ", "
-                + "subType=" + subType + ", " + "region=" + region + ", " + "hardwareVersion=" + hardwareVersion + ']';
-    }
 }

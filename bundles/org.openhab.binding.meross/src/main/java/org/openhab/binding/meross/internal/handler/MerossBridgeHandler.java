@@ -50,8 +50,8 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
             logger.info("Connector successfully set");
             int httpStatusCode = getHttpConnector().login().statusCode();
             int apiStatusCode = getHttpConnector().apiStatus();
+            getHttpConnector().logout();
             logger.info("logging out from http connector");
-            getHttpConnector().logOut();
             String apiMessage = MerossEnum.ApiStatusCode.getMessageByApiStatusCode(apiStatusCode);
             if (httpStatusCode != 200) {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Communication error");
@@ -76,12 +76,5 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
 
     public static MerossHttpConnector getHttpConnector() {
         return connector;
-    }
-
-    @Override
-    public void dispose() {
-        super.dispose();
-        logger.info("logging  out from http connector");
-        getHttpConnector().logOut();
     }
 }

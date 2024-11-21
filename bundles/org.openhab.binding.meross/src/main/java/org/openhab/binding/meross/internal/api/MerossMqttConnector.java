@@ -48,16 +48,16 @@ public class MerossMqttConnector {
     private static String clientId;
     private static String key;
     private static String destinationDeviceUUID;
-    private static String incomingResponse;
 
     /**
      * @param message The mqtt message
      * @param requestTopic The request topic
      * @return The mqtt response
      */
-    public static String publishMqttMessage(byte[] message, String requestTopic) {
+    public static synchronized String publishMqttMessage(byte[] message, String requestTopic) {
         String clearPassword = "%s%s".formatted(userId, key);
         String hashedPassword = MD5Util.getMD5String(clearPassword);
+
         Mqtt5BlockingClient client = Mqtt5Client.builder().identifier(clientId).serverHost(brokerAddress)
                 .serverPort(SECURE_WEB_SOCKET_PORT).sslWithDefaultConfig().buildBlocking();
 
@@ -74,6 +74,7 @@ public class MerossMqttConnector {
         client.subscribe(subscribeMessage);
         client.publish(publishMessage);
 
+        String incomingResponse = null;
         try (final Mqtt5BlockingClient.Mqtt5Publishes publishes = client
                 .publishes(MqttGlobalPublishFilter.SUBSCRIBED)) {
             Optional<Mqtt5Publish> publishesResponse = publishes.receive(RECEPTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -89,8 +90,8 @@ public class MerossMqttConnector {
             }
         } catch (InterruptedException e) {
             logger.debug("InterruptedException: {}", e.getMessage());
-
         }
+
         client.disconnect();
         return incomingResponse;
     }
