@@ -179,4 +179,19 @@ public class MerossEnum {
             return value;
         }
     }
+
+    public enum OnOffStatus {
+        OFF(0),
+        ON(1);
+
+        final int value;
+
+        OnOffStatus(int value) {
+            this.value = value;
+        }
+
+        public int value() {
+            return value;
+        }
+    }
 }
