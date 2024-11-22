@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.meross.internal.manager;
+package org.openhab.binding.meross.internal.api;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,9 +19,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import org.openhab.binding.meross.internal.api.MerossEnum;
-import org.openhab.binding.meross.internal.api.MerossHttpConnector;
-import org.openhab.binding.meross.internal.api.MerossMqttConnector;
 import org.openhab.binding.meross.internal.command.Command;
 import org.openhab.binding.meross.internal.dto.SystemAll;
 import org.openhab.binding.meross.internal.factory.ModeFactory;
@@ -42,12 +39,16 @@ import com.google.gson.reflect.TypeToken;
  * @author Giovanni Fabiani - Initial contribution
  */
 
-public abstract class MerossManager {
+public class MerossManager {
     private static final Logger logger = LoggerFactory.getLogger(MerossManager.class);
     private final MerossHttpConnector merossHttpConnector;
 
-    MerossManager(MerossHttpConnector merossHttpConnector) {
+    private MerossManager(MerossHttpConnector merossHttpConnector) {
         this.merossHttpConnector = merossHttpConnector;
+    }
+
+    public static MerossManager createMerossManager(MerossHttpConnector merossHttpConnector) {
+        return new MerossManager(merossHttpConnector);
     }
 
     void initializeMqttConnector() {
@@ -75,43 +76,49 @@ public abstract class MerossManager {
         ModeFactory modeFactory = TypeFactory.getFactory(commandType);
         Command command = modeFactory.commandMode(commandMode);
         byte[] commandMessage = command.commandType(commandType);
-        if (!abilities(deviceName).contains(MerossEnum.Namespace.getAbilityValueByName(commandType))) {
+        if (!getAbilities(deviceName).contains(MerossEnum.Namespace.getAbilityValueByName(commandType))) {
             logger.warn("Command {} not supported", commandType);
         }
         MerossMqttConnector.publishMqttMessage(commandMessage, requestTopic);
     }
 
-    public int online(String deviceName) {
-        return systemAll(deviceName).getPayload().getAll().getSystem().getOnline().getStatus();
+    public int onlineStatus(String deviceName) {
+        if(togglexArrayNotEmpty(deviceName)){
+            return getSystemAll(deviceName).getPayload().getAll().getSystem().getOnline().getStatus();
+        } else {
+            try {
+                throw  new MerossException("OnlineArray is empty");
+            } catch (MerossException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
-    private String getSystemAllsystemAllString(String deviceName) {
-        initializeMqttConnector();
-        String requestTopic = MerossMqttConnector
-                .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
-        byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
-                Collections.emptyMap());
-        return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
-
+    public int togglexChannelStatus(String deviceName) {
+        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getChannel();
     }
 
-    private  SystemAll deserialize( String json){
+    public int togglexOnOffStatus(String deviceName) {
+        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getOnoff();
+    }
+
+    public long togglexLmt(String deviceName) {
+        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getLmTime();
+    }
+
+    private SystemAll deserialize(String json) {
         return new Gson().fromJson(json, SystemAll.class);
     }
 
-     SystemAll systemAll(String deviceName) {
-         try {
-             return CompletableFuture.supplyAsync(()->getSystemAllsystemAllString(deviceName)).
-                     thenApply(this::deserialize)
-                     .get();
-         } catch (InterruptedException e) {
-             throw new RuntimeException(e);
-         } catch (ExecutionException e) {
-             throw new RuntimeException(e);
-         }
-     }
+    private SystemAll getSystemAll(String deviceName) {
+        try {
+            return CompletableFuture.supplyAsync(() -> getSystemAllJson(deviceName)).thenApply(this::deserialize).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    HashSet<String> abilities(String deviceName) {
+    HashSet<String> getAbilities(String deviceName) {
         initializeMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
@@ -125,5 +132,17 @@ public abstract class MerossManager {
         };
         HashMap<String, HashMap<String, String>> abilities = new Gson().fromJson(abilityString, type);
         return new HashSet<>(abilities.keySet());
+    }
+
+    private String getSystemAllJson(String deviceName) {
+        initializeMqttConnector();
+        String requestTopic = MerossMqttConnector
+                .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
+        byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
+                Collections.emptyMap());
+        return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
+    }
+    boolean togglexArrayNotEmpty(String deviceName) {
+        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().size() > 0;
     }
 }
