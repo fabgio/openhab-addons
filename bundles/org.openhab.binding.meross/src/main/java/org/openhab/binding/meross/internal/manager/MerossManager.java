@@ -16,12 +16,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossHttpConnector;
 import org.openhab.binding.meross.internal.api.MerossMqttConnector;
 import org.openhab.binding.meross.internal.command.Command;
+import org.openhab.binding.meross.internal.dto.SystemAll;
 import org.openhab.binding.meross.internal.factory.ModeFactory;
 import org.openhab.binding.meross.internal.factory.TypeFactory;
 import org.slf4j.Logger;
@@ -29,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
@@ -40,7 +41,7 @@ import com.google.gson.reflect.TypeToken;
  *
  * @author Giovanni Fabiani - Initial contribution
  */
-@NonNullByDefault
+
 public abstract class MerossManager {
     private static final Logger logger = LoggerFactory.getLogger(MerossManager.class);
     private final MerossHttpConnector merossHttpConnector;
@@ -81,21 +82,34 @@ public abstract class MerossManager {
     }
 
     public int online(String deviceName) {
-        String systemAllPublishesMessage = systemAll(deviceName);
-        JsonElement jsonElement = JsonParser.parseString(systemAllPublishesMessage);
-        JsonObject jsonObject = jsonElement.getAsJsonObject().getAsJsonObject().get("payload").getAsJsonObject()
-                .get("all").getAsJsonObject().get("system").getAsJsonObject().get("online").getAsJsonObject();
-        return jsonObject.get("status").getAsInt();
+        return systemAll(deviceName).getPayload().getAll().getSystem().getOnline().getStatus();
     }
 
-    String systemAll(String deviceName) {
+    private String getSystemAllsystemAllString(String deviceName) {
         initializeMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
         byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
                 Collections.emptyMap());
         return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
+
     }
+
+    private  SystemAll deserialize( String json){
+        return new Gson().fromJson(json, SystemAll.class);
+    }
+
+     SystemAll systemAll(String deviceName) {
+         try {
+             return CompletableFuture.supplyAsync(()->getSystemAllsystemAllString(deviceName)).
+                     thenApply(this::deserialize)
+                     .get();
+         } catch (InterruptedException e) {
+             throw new RuntimeException(e);
+         } catch (ExecutionException e) {
+             throw new RuntimeException(e);
+         }
+     }
 
     HashSet<String> abilities(String deviceName) {
         initializeMqttConnector();
