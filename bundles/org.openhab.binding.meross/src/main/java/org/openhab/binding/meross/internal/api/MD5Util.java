@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.meross.internal.util;
+package org.openhab.binding.meross.internal.api;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
