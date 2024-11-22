@@ -36,8 +36,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.openhab.binding.meross.internal.dto.CloudCredentials;
 import org.openhab.binding.meross.internal.dto.Device;
-import org.openhab.binding.meross.internal.exception.MerossException;
-import org.openhab.binding.meross.internal.util.MD5Util;
 import org.openhab.core.OpenHAB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
