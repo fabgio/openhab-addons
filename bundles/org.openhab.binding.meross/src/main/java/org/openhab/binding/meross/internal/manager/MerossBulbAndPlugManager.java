@@ -34,21 +34,16 @@ public class MerossBulbAndPlugManager extends MerossManager {
         super(merossHttpConnector);
     }
 
-    private JsonArray togglexArray(String deviceName) {
-        JsonElement jsonElement = JsonParser.parseString(systemAll(deviceName));
-        return jsonElement.getAsJsonObject().getAsJsonObject().get("payload").getAsJsonObject().get("all")
-                .getAsJsonObject().get("digest").getAsJsonObject().get("togglex").getAsJsonArray();
-    }
 
     public int channel(String deviceName) {
-        return togglexArray(deviceName).get(0).getAsJsonObject().get("channel").getAsInt();
+        return systemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getChannel();
     }
 
     public int onoff(String deviceName) {
-        return togglexArray(deviceName).get(0).getAsJsonObject().get("onoff").getAsInt();
+        return systemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getOnoff();
     }
 
     public long lmt(String deviceName) {
-        return togglexArray(deviceName).get(0).getAsJsonObject().get("lmTime").getAsLong();
+        return systemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getLmTime();
     }
 }

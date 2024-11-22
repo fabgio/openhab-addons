@@ -195,7 +195,6 @@ public class MerossHttpConnector {
         file.getParentFile().mkdirs();
         try {
             Files.writeString(file.toPath(), content, StandardCharsets.UTF_8);
-            logger.debug("Created file '{}' with content '{}'", file.getAbsolutePath(), content);
         } catch (FileNotFoundException e) {
             logger.error("Couldn't create file '{}'.", file.getPath(), e);
         } catch (IOException e) {
@@ -207,7 +206,6 @@ public class MerossHttpConnector {
         String content = null;
         try {
             content = Files.readString(file.toPath());
-            logger.info("Reading from file '{}'", file.getAbsolutePath());
         } catch (IOException e) {
             logger.error("Couldn't read from file '{}'.", file.getPath(), e);
         }
