@@ -43,15 +43,11 @@ public class MerossManager {
     private static final Logger logger = LoggerFactory.getLogger(MerossManager.class);
     private final MerossHttpConnector merossHttpConnector;
 
-    private MerossManager(MerossHttpConnector merossHttpConnector) {
+    public MerossManager(MerossHttpConnector merossHttpConnector) {
         this.merossHttpConnector = merossHttpConnector;
     }
 
-    public static MerossManager createMerossManager(MerossHttpConnector merossHttpConnector) {
-        return new MerossManager(merossHttpConnector);
-    }
-
-    void initializeMqttConnector() {
+    private void initializeMqttConnector() {
         String clientId = Objects.requireNonNull(MerossMqttConnector.buildClientId());
         MerossMqttConnector.setClientId(clientId);
         String userId = Objects.requireNonNull(merossHttpConnector.getCredentials().userId());
@@ -83,15 +79,7 @@ public class MerossManager {
     }
 
     public int onlineStatus(String deviceName) {
-        if(togglexArrayNotEmpty(deviceName)){
-            return getSystemAll(deviceName).getPayload().getAll().getSystem().getOnline().getStatus();
-        } else {
-            try {
-                throw  new MerossException("OnlineArray is empty");
-            } catch (MerossException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        return getSystemAll(deviceName).getPayload().getAll().getSystem().getOnline().getStatus();
     }
 
     public int togglexChannelStatus(String deviceName) {
@@ -118,7 +106,16 @@ public class MerossManager {
         }
     }
 
-    HashSet<String> getAbilities(String deviceName) {
+    private String getSystemAllJson(String deviceName) {
+        initializeMqttConnector();
+        String requestTopic = MerossMqttConnector
+                .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
+        byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
+                Collections.emptyMap());
+        return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
+    }
+
+    private HashSet<String> getAbilities(String deviceName) {
         initializeMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
@@ -132,17 +129,5 @@ public class MerossManager {
         };
         HashMap<String, HashMap<String, String>> abilities = new Gson().fromJson(abilityString, type);
         return new HashSet<>(abilities.keySet());
-    }
-
-    private String getSystemAllJson(String deviceName) {
-        initializeMqttConnector();
-        String requestTopic = MerossMqttConnector
-                .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
-        byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
-                Collections.emptyMap());
-        return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
-    }
-    boolean togglexArrayNotEmpty(String deviceName) {
-        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().size() > 0;
     }
 }

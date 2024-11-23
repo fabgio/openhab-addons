@@ -36,7 +36,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.openhab.binding.meross.internal.dto.CloudCredentials;
 import org.openhab.binding.meross.internal.dto.Device;
-import org.openhab.core.OpenHAB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,7 +119,11 @@ public class MerossHttpConnector {
     public HttpResponse<String> login() {
         try {
             Map<String, String> loginMap = Map.of("email", userName, "password", password);
-            return Objects.requireNonNull(postResponse(loginMap, apiBaseUrl, MerossEnum.HttpEndpoint.LOGIN.value()));
+            HttpResponse<String> httpResponse = Objects
+                    .requireNonNull(postResponse(loginMap, apiBaseUrl, MerossEnum.HttpEndpoint.LOGIN.value()));
+            logout();
+            return httpResponse;
+
         } catch (MerossException e) {
             logger.debug("Error while login", e);
             throw new RuntimeException(e);
@@ -130,9 +133,6 @@ public class MerossHttpConnector {
     /**
      * @return the status code from the Meross API
      */
-    public int apiStatus() {
-        return JsonParser.parseString(login().body()).getAsJsonObject().get("apiStatus").getAsInt();
-    }
 
     private CloudCredentials fetchCredentials() {
         if (apiStatus() != MerossEnum.ApiStatusCode.OK.value()) {
@@ -214,15 +214,8 @@ public class MerossHttpConnector {
      * @return The user's credentials
      */
     public CloudCredentials getCredentials() {
-        File file = new File(OpenHAB.getUserDataFolder() + File.separator + CREDENTIAL_FILE_NAME);
-        CloudCredentials credentials;
-        if (!file.exists()) {
-            credentials = CompletableFuture.supplyAsync(this::fetchCredentials).join();
-            String json = new Gson().toJson(credentials);
-            writeFile(json, file);
-        } else {
-            credentials = new Gson().fromJson(readFile(file), CloudCredentials.class);
-        }
+        CloudCredentials credentials = CompletableFuture.supplyAsync(this::fetchCredentials).join();
+        logger.info("logged out from Http connector");
         return credentials;
     }
 
@@ -230,24 +223,22 @@ public class MerossHttpConnector {
      * @return The user's devices
      */
     public ArrayList<Device> getDevices() {
-        File file = new File(OpenHAB.getUserDataFolder() + File.separator + DEVICE_FILE_NAME);
-        ArrayList<Device> devices;
-        TypeToken<ArrayList<Device>> type = new TypeToken<>() {
-        };
-        if (!file.exists()) {
-            devices = CompletableFuture.supplyAsync(this::fetchDevices).join();
-            String json = new Gson().toJson(devices);
-            writeFile(json, file);
-        } else {
-            devices = new Gson().fromJson(readFile(file), type);
-        }
+        ArrayList<Device> devices = CompletableFuture.supplyAsync(this::fetchDevices).join();
+        logger.info("logged out from Http connector");
         return devices;
     }
 
-    public void logout() {
+    public int apiStatus() {
+        return CompletableFuture
+                .supplyAsync(() -> JsonParser.parseString(login().body()).getAsJsonObject().get("apiStatus").getAsInt())
+                .join();
+    }
+
+    public synchronized void logout() {
         try {
             Objects.requireNonNull(
                     postResponse(Collections.emptyMap(), apiBaseUrl, MerossEnum.HttpEndpoint.LOGOUT.value()));
+            logger.info("logged out from Http connector");
         } catch (MerossException e) {
             logger.debug("Error while logging out", e);
             throw new RuntimeException(e);
