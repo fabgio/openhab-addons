@@ -56,10 +56,11 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         config = getConfigAs(MerossBulbAndPlugConfiguration.class);
         scheduler.execute(() -> {
             int deviceState = manager.onlineStatus(config.deviceName);
-            logger.info("logging out from http connector");
-            updateStatus(
-                    deviceState != MerossEnum.OnlineStatus.ONLINE.value() ? ThingStatus.OFFLINE : ThingStatus.ONLINE);
-            updateChannelState();
+            if (deviceState != MerossEnum.OnlineStatus.ONLINE.value())
+                updateStatus(ThingStatus.OFFLINE);
+            else
+                updateStatus(ThingStatus.ONLINE);
+            // updateChannelState();
         });
     }
 
@@ -85,11 +86,11 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             switch (command.toString()) {
                 case "ON" -> {
                     logger.info("Toggled On");
-                    manager.executeCommand(config.deviceName, CONTROL_TOGGLEX_NAME, "ON");
+                    manager.togglexOn(config.deviceName);
                 }
                 case "OFF" -> {
                     logger.info("Toggled Off");
-                    manager.executeCommand(config.deviceName, CONTROL_TOGGLEX_NAME, "OFF");
+                    manager.togglexOff(config.deviceName);
                 }
             }
         } else {
