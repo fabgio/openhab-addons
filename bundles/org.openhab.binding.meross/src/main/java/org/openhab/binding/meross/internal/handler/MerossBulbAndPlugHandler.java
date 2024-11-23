@@ -15,8 +15,6 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
-import java.util.concurrent.TimeUnit;
-
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossManager;
@@ -41,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
     private final String CONTROL_TOGGLEX_NAME = MerossEnum.Namespace.CONTROL_TOGGLEX.name();
-    private final MerossManager manager = MerossManager.createMerossManager(getHttpConnector());
+    private final MerossManager manager = new MerossManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
 
     public MerossBulbAndPlugHandler(Thing thing) {
@@ -57,13 +55,11 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         }
         config = getConfigAs(MerossBulbAndPlugConfiguration.class);
         scheduler.execute(() -> {
-            int deviceStatus = manager.togglexOnOffStatus(config.deviceName);
-            logger.info("Device status code from http connector: {}", deviceStatus);
+            int deviceState = manager.onlineStatus(config.deviceName);
             logger.info("logging out from http connector");
-            getHttpConnector().logout();
             updateStatus(
-                    deviceStatus != MerossEnum.OnlineStatus.ONLINE.value() ? ThingStatus.OFFLINE : ThingStatus.ONLINE);
-            scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1, TimeUnit.SECONDS);
+                    deviceState != MerossEnum.OnlineStatus.ONLINE.value() ? ThingStatus.OFFLINE : ThingStatus.ONLINE);
+            updateChannelState();
         });
     }
 

@@ -15,7 +15,7 @@ package org.openhab.binding.meross.internal.dto;
 import java.util.List;
 
 /**
- * The {@link CloudCredentials} class is a pojo holding cloud System All components
+ * The {@link SystemAll} class is a pojo holding cloud System All components
  *
  * @author Giovanni Fabiani - Initial contribution
  */
@@ -217,7 +217,6 @@ public class SystemAll {
                     private String timezone;
                     private List<List<Long>> timeRule;
 
-                    // Getters
                     public long getTimestamp() {
                         return timestamp;
                     }
