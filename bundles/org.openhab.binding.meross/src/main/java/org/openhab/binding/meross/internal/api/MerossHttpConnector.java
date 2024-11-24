@@ -181,7 +181,6 @@ public class MerossHttpConnector {
     private String readFile(File file) {
         String content = null;
         try {
-            logger.info("Reading file '{}'.", file.getPath());
             content = Files.readString(file.toPath());
         } catch (IOException e) {
             logger.error("Couldn't read from file '{}'.", file.getPath(), e);
