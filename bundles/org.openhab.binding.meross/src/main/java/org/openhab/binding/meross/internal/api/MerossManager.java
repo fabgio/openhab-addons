@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.openhab.binding.meross.internal.command.Command;
 import org.openhab.binding.meross.internal.dto.SystemAll;
@@ -90,6 +89,7 @@ public class MerossManager {
         return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getOnoff();
     }
 
+
     public void togglexOn(String deviceName) {
         executeCommand(deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "ON");
     }
@@ -107,20 +107,14 @@ public class MerossManager {
     }
 
     private SystemAll getSystemAll(String deviceName) {
-        try {
-            return CompletableFuture.supplyAsync(() -> getSystemAllJson(deviceName)).thenApply(this::deserialize).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String getSystemAllJson(String deviceName) {
         initializeMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
         byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
                 Collections.emptyMap());
-        return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
+        return CompletableFuture
+                .supplyAsync(() -> MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic))
+                .thenApply(this::deserialize).join();
     }
 
     private HashSet<String> getAbilities(String deviceName) {
