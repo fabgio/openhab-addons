@@ -14,6 +14,8 @@ package org.openhab.binding.meross.internal.dto;
 
 import java.util.List;
 
+import com.google.gson.annotations.Expose;
+
 /**
  * The {@link SystemAll} class is a pojo holding cloud System All components
  *
@@ -31,6 +33,7 @@ public class SystemAll {
         return payload;
     }
 
+    @Expose
     private Payload payload;
 
     public static class Header {
@@ -91,10 +94,13 @@ public class SystemAll {
             return all;
         }
 
+        @Expose
         private All all;
 
         public static class All {
+            @Expose
             private System system;
+            @Expose
             private Digest digest;
 
             // Getters
@@ -110,6 +116,7 @@ public class SystemAll {
                 private Hardware hardware;
                 private Firmware firmware;
                 private Time time;
+                @Expose
                 private Online online;
 
                 // Getters
@@ -231,6 +238,7 @@ public class SystemAll {
                 }
 
                 public static class Online {
+                    @Expose
                     private int status;
                     private String bindId;
                     private int who;
@@ -251,6 +259,7 @@ public class SystemAll {
             }
 
             public static class Digest {
+                @Expose
                 private List<Togglex> togglex;
                 private List<Object> triggerx;
                 private List<Object> timerx;
@@ -269,8 +278,11 @@ public class SystemAll {
                 }
 
                 public static class Togglex {
+                    @Expose
                     private int channel;
+                    @Expose
                     private int onoff;
+                    @Expose
                     private long lmTime;
 
                     // Getters
