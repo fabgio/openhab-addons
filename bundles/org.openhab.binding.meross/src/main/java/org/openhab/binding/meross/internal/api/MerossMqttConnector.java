@@ -53,7 +53,7 @@ public class MerossMqttConnector {
      * @param requestTopic The request topic
      * @return The mqtt response
      */
-    public static synchronized String publishMqttMessage(byte[] message, String requestTopic) {
+    synchronized static String publishMqttMessage(byte[] message, String requestTopic) {
         String clearPassword = "%s%s".formatted(userId, key);
         String hashedPassword = MD5Util.getMD5String(clearPassword);
 
