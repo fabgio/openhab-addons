@@ -15,9 +15,6 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossManager;
@@ -43,7 +40,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
     private final MerossManager manager = new MerossManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
-    private @Nullable ScheduledFuture<?> updateStateSchedule;
+    // private @Nullable ScheduledFuture<?> updateStateSchedule;
 
     public MerossBulbAndPlugHandler(Thing thing) {
         super(thing);
@@ -61,10 +58,13 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             int deviceState = manager.onlineStatus(config.deviceName);
             if (deviceState != MerossEnum.OnlineStatus.ONLINE.value())
                 updateStatus(ThingStatus.OFFLINE);
-            else
+            else {
                 updateStatus(ThingStatus.ONLINE);
+                updateChannelState();
+                // updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1,
+                // TimeUnit.SECONDS);
+            }
         });
-        updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 0, 1, TimeUnit.SECONDS);
     }
 
     private void updateChannelState() {
@@ -101,12 +101,12 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         }
     }
 
-    @Override
-    public void dispose() {
-        ScheduledFuture<?> sfupdate = updateStateSchedule;
-        if (sfupdate != null) {
-            sfupdate.cancel(true);
-            updateStateSchedule = null;
-        }
-    }
+    // @Override
+    // public void dispose() {
+    // ScheduledFuture<?> sfupdate = updateStateSchedule;
+    // if (sfupdate != null) {
+    // sfupdate.cancel(true);
+    // updateStateSchedule = null;
+    // }
+    // }
 }
