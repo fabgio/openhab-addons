@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
@@ -89,7 +90,6 @@ public class MerossManager {
         return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getOnoff();
     }
 
-
     public void togglexOn(String deviceName) {
         executeCommand(deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "ON");
     }
@@ -103,7 +103,8 @@ public class MerossManager {
     }
 
     private SystemAll deserialize(String json) {
-        return new Gson().fromJson(json, SystemAll.class);
+        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+        return gson.fromJson(json, SystemAll.class);
     }
 
     private SystemAll getSystemAll(String deviceName) {
