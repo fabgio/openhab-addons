@@ -15,6 +15,9 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossManager;
@@ -40,7 +43,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
     private final MerossManager manager = new MerossManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
-    // private @Nullable ScheduledFuture<?> updateStateSchedule;
+    private @Nullable ScheduledFuture<?> updateStateSchedule;
 
     public MerossBulbAndPlugHandler(Thing thing) {
         super(thing);
@@ -55,23 +58,22 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         }
         config = getConfigAs(MerossBulbAndPlugConfiguration.class);
         scheduler.execute(() -> {
-            int deviceState = manager.onlineStatus(config.deviceName);
-            if (deviceState != MerossEnum.OnlineStatus.ONLINE.value())
+            int onlineStatus = manager.onlineStatus(config.deviceName);
+            if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value())
                 updateStatus(ThingStatus.OFFLINE);
             else {
                 updateStatus(ThingStatus.ONLINE);
-                updateChannelState();
-                // updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1,
-                // TimeUnit.SECONDS);
             }
+            updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1, TimeUnit.SECONDS);
         });
     }
 
     private void updateChannelState() {
-        updateState(CHANNEL_TOGGLEX,
-                manager.togglexOnOffStatus(config.deviceName) == MerossEnum.OnOffStatus.OFF.value()
-                        ? StringType.valueOf("Off")
-                        : StringType.valueOf("On"));
+        int onOffStatus = manager.togglexOnOffStatus(config.deviceName);
+        if (onOffStatus == MerossEnum.OnOffStatus.OFF.value())
+            updateState(CHANNEL_TOGGLEX, StringType.valueOf("Off"));
+        else
+            updateState(CHANNEL_TOGGLEX, StringType.valueOf("On"));
     }
 
     @Override
@@ -101,12 +103,12 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         }
     }
 
-    // @Override
-    // public void dispose() {
-    // ScheduledFuture<?> sfupdate = updateStateSchedule;
-    // if (sfupdate != null) {
-    // sfupdate.cancel(true);
-    // updateStateSchedule = null;
-    // }
-    // }
+    @Override
+    public void dispose() {
+        ScheduledFuture<?> sfupdate = updateStateSchedule;
+        if (sfupdate != null) {
+            sfupdate.cancel(true);
+            updateStateSchedule = null;
+        }
+    }
 }
