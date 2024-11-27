@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -47,6 +48,7 @@ public class MerossMqttConnector {
     private static String clientId;
     private static String key;
     private static String destinationDeviceUUID;
+    private static Semaphore semaphore = new Semaphore(1);
 
     /**
      * @param message The mqtt message
@@ -54,6 +56,12 @@ public class MerossMqttConnector {
      * @return The mqtt response
      */
     synchronized static String publishMqttMessage(byte[] message, String requestTopic) {
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        logger.info("Semaphore acquired");
         String clearPassword = "%s%s".formatted(userId, key);
         String hashedPassword = MD5Util.getMD5String(clearPassword);
 
@@ -72,6 +80,9 @@ public class MerossMqttConnector {
 
         client.subscribe(subscribeMessage);
         client.publish(publishMessage);
+
+        semaphore.release();
+        logger.info("Semaphore released");
 
         String incomingResponse = null;
         try (final Mqtt5BlockingClient.Mqtt5Publishes publishes = client
