@@ -16,18 +16,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import org.openhab.binding.meross.internal.command.Command;
-import org.openhab.binding.meross.internal.dto.SystemAll;
 import org.openhab.binding.meross.internal.factory.ModeFactory;
 import org.openhab.binding.meross.internal.factory.TypeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
@@ -65,7 +64,7 @@ public class MerossManager {
      * @return The MQTT response
      */
 
-    void executeCommand(String deviceName, String commandType, String commandMode) {
+    private void executeCommand(String deviceName, String commandType, String commandMode) {
         initializeMqttConnector();
         String deviceUUID = Objects.requireNonNull(merossHttpConnector.getDevUUIDByDevName(deviceName));
         String requestTopic = MerossMqttConnector.buildDeviceRequestTopic(deviceUUID);
@@ -79,15 +78,19 @@ public class MerossManager {
     }
 
     public int onlineStatus(String deviceName) {
-        return getSystemAll(deviceName).getPayload().getAll().getSystem().getOnline().getStatus();
+        JsonObject jsonObject = JsonParser.parseString(getSystemAll(deviceName)).getAsJsonObject();
+        final JsonObject asJsonObject = jsonObject.getAsJsonObject("payload").getAsJsonObject("all")
+                .getAsJsonObject("system").getAsJsonObject("online");
+        JsonElement asJsonElement = asJsonObject.get("status");
+        return asJsonElement.getAsInt();
     }
 
-    public int togglexChannelStatus(String deviceName) {
-        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getChannel();
-    }
-
-     public int togglexOnOffStatus(String deviceName) {
-        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getOnoff();
+    public int togglexOnOffStatus(String deviceName) {
+        JsonObject jsonObject = JsonParser.parseString(getSystemAll(deviceName)).getAsJsonObject();
+        JsonArray togglexArray = jsonObject.getAsJsonObject("payload").getAsJsonObject("all").getAsJsonObject("digest")
+                .getAsJsonArray("togglex");
+        JsonObject togglexObject = togglexArray.get(0).getAsJsonObject();
+        return togglexObject.get("onoff").getAsInt();
     }
 
     public void togglexOn(String deviceName) {
@@ -98,24 +101,13 @@ public class MerossManager {
         executeCommand(deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "OFF");
     }
 
-    public long togglexLmt(String deviceName) {
-        return getSystemAll(deviceName).getPayload().getAll().getDigest().getTogglex().get(0).getLmTime();
-    }
-
-    private SystemAll deserialize(String json) {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        return gson.fromJson(json, SystemAll.class);
-    }
-
-     SystemAll getSystemAll(String deviceName) {
+    String getSystemAll(String deviceName) {
         initializeMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
         byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
                 Collections.emptyMap());
-        return CompletableFuture
-                .supplyAsync(() -> MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic))
-                .thenApply(this::deserialize).join();
+        return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
     }
 
     private HashSet<String> getAbilities(String deviceName) {
