@@ -64,7 +64,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             else {
                 updateStatus(ThingStatus.ONLINE);
             }
-            updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1, TimeUnit.SECONDS);
+            updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 2, TimeUnit.SECONDS);
         });
     }
 

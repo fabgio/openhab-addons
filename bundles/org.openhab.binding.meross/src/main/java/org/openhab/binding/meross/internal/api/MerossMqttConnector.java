@@ -48,7 +48,7 @@ public class MerossMqttConnector {
     private static String clientId;
     private static String key;
     private static String destinationDeviceUUID;
-    private static Semaphore semaphore = new Semaphore(1);
+    private static final Semaphore semaphore = new Semaphore(1);
 
     /**
      * @param message The mqtt message
@@ -61,7 +61,6 @@ public class MerossMqttConnector {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        logger.info("Semaphore acquired");
         String clearPassword = "%s%s".formatted(userId, key);
         String hashedPassword = MD5Util.getMD5String(clearPassword);
 
@@ -82,7 +81,6 @@ public class MerossMqttConnector {
         client.publish(publishMessage);
 
         semaphore.release();
-        logger.info("Semaphore released");
 
         String incomingResponse = null;
         try (final Mqtt5BlockingClient.Mqtt5Publishes publishes = client
