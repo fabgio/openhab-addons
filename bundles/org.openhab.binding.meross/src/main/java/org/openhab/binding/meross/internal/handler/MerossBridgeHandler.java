@@ -66,11 +66,15 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
             connector = new MerossHttpConnector(config.hostname, config.username, config.password);
             setConnector(connector);
             logger.info("Connector successfully set");
-            if (!credentialfile.exists() && !deviceFile.exists()) {
+            if (!credentialfile.exists()) {
                 logger.info("No files found, Fetching from cloud");
                 CompletableFuture.runAsync(() -> {
                     goOnline();
                     fetchCredentialsAndSave();
+                });
+            } else if (!deviceFile.exists()) {
+                CompletableFuture.runAsync(() -> {
+                    goOnline();
                     fetchDevicesAndSave();
                 });
             } else {
@@ -136,5 +140,17 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
+    }
+
+    public void refreshCredentials() {
+        if (credentialfile.exists()) {
+            credentialfile.delete();
+        }
+    }
+
+    public void refreshDevices() {
+        if (deviceFile.exists()) {
+            deviceFile.delete();
+        }
     }
 }
