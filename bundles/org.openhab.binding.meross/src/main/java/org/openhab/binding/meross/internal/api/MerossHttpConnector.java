@@ -174,6 +174,14 @@ public class MerossHttpConnector {
                 .orElseThrow(() -> new RuntimeException("No device found with name: " + devName));
     }
 
+    /**
+     * @param devName The device name
+     * @return true if the device name matches the predicate
+     */
+    public boolean deviceExistsByName(String devName) {
+        return getDevices().stream().map(Device::devName).anyMatch(s -> s.equals(devName));
+    }
+
     private void setToken(String token) {
         this.token = token;
     }

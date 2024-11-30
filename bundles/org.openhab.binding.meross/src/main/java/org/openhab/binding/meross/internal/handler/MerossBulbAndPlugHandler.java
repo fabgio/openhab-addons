@@ -58,13 +58,15 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         }
         config = getConfigAs(MerossBulbAndPlugConfiguration.class);
         scheduler.execute(() -> {
+            boolean deviceExists = getHttpConnector().deviceExistsByName(config.deviceName);
             int onlineStatus = manager.onlineStatus(config.deviceName);
-            if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value())
-                updateStatus(ThingStatus.OFFLINE);
-            else {
+            if (!deviceExists) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device does not not exist");
+            } else if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
+            } else
                 updateStatus(ThingStatus.ONLINE);
-            }
-            updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 2, TimeUnit.SECONDS);
+            updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1, TimeUnit.SECONDS);
         });
     }
 
