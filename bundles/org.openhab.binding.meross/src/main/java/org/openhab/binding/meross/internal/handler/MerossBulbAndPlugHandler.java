@@ -15,6 +15,8 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +46,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final MerossManager manager = new MerossManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
     private @Nullable ScheduledFuture<?> updateStateSchedule;
+    private final ScheduledExecutorService localScheduler = Executors.newSingleThreadScheduledExecutor();
 
     public MerossBulbAndPlugHandler(Thing thing) {
         super(thing);
@@ -66,7 +69,9 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
             } else
                 updateStatus(ThingStatus.ONLINE);
-            updateStateSchedule = scheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1, TimeUnit.SECONDS);
+            updateStateSchedule = localScheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1,
+                    TimeUnit.SECONDS);
+
         });
     }
 
