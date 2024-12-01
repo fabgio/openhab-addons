@@ -67,6 +67,7 @@ public class MerossManager {
     private void executeCommand(String deviceName, String commandType, String commandMode) {
         initializeMqttConnector();
         String deviceUUID = Objects.requireNonNull(merossHttpConnector.getDevUUIDByDevName(deviceName));
+        MerossMqttConnector.setDestinationDeviceUUID(deviceUUID);
         String requestTopic = MerossMqttConnector.buildDeviceRequestTopic(deviceUUID);
         ModeFactory modeFactory = TypeFactory.getFactory(commandType);
         Command command = modeFactory.commandMode(commandMode);
