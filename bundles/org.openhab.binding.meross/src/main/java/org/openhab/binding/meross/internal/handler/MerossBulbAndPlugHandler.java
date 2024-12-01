@@ -15,9 +15,7 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.Nullable;
@@ -45,8 +43,6 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
     private final MerossManager manager = new MerossManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
-    private @Nullable ScheduledFuture<?> updateStateSchedule;
-    private final ScheduledExecutorService localScheduler = Executors.newSingleThreadScheduledExecutor();
 
     public MerossBulbAndPlugHandler(Thing thing) {
         super(thing);
@@ -61,26 +57,22 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         }
         config = getConfigAs(MerossBulbAndPlugConfiguration.class);
         scheduler.execute(() -> {
-            boolean deviceExists = getHttpConnector().deviceExistsByName(config.deviceName);
             int onlineStatus = manager.onlineStatus(config.deviceName);
-            if (!deviceExists) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device does not not exist");
-            } else if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
+            if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
             } else
                 updateStatus(ThingStatus.ONLINE);
-            updateStateSchedule = localScheduler.scheduleWithFixedDelay(this::updateChannelState, 1, 1,
-                    TimeUnit.SECONDS);
-
+            scheduler.scheduleWithFixedDelay(this::updateChannelStateAsync, 1, 1, TimeUnit.SECONDS);
         });
     }
 
-    private void updateChannelState() {
-        int onOffStatus = manager.togglexOnOffStatus(config.deviceName);
-        if (onOffStatus == MerossEnum.OnOffStatus.OFF.value())
-            updateState(CHANNEL_TOGGLEX, StringType.valueOf("Off"));
-        else
-            updateState(CHANNEL_TOGGLEX, StringType.valueOf("On"));
+    private void updateChannelStateAsync() {
+        CompletableFuture.supplyAsync(() -> manager.togglexOnOffStatus(config.deviceName))
+                .thenAccept(this::updateChannelState);
+    }
+
+    void updateChannelState(int status) {
+        updateState(CHANNEL_TOGGLEX, status == 0 ? StringType.valueOf("Off") : StringType.valueOf("On"));
     }
 
     @Override
@@ -107,15 +99,6 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             }
         } else {
             logger.debug("Unsupported command {} for channel {}", command, channelUID);
-        }
-    }
-
-    @Override
-    public void dispose() {
-        ScheduledFuture<?> sfupdate = updateStateSchedule;
-        if (sfupdate != null) {
-            sfupdate.cancel(true);
-            updateStateSchedule = null;
         }
     }
 }

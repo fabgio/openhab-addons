@@ -13,19 +13,12 @@
 package org.openhab.binding.meross.internal.handler;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossHttpConnector;
 import org.openhab.binding.meross.internal.config.MerossBridgeConfiguration;
-import org.openhab.binding.meross.internal.dto.CloudCredentials;
-import org.openhab.binding.meross.internal.dto.Device;
 import org.openhab.core.OpenHAB;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
@@ -36,8 +29,6 @@ import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
 
 /**
  * The {@link MerossBridgeHandler} is responsible for handling http communication with Meross Host.
@@ -66,57 +57,28 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
             connector = new MerossHttpConnector(config.hostname, config.username, config.password);
             setConnector(connector);
             logger.info("Connector successfully set");
-            if (!credentialfile.exists()) {
-                logger.info("No files found, Fetching from cloud");
+            int httpStatusCode = getHttpConnector().login().statusCode();
+            getHttpConnector().logout();
+            int apiStatusCode = getHttpConnector().apiStatus();
+            getHttpConnector().logout();
+            logger.info("logging out from http connector");
+            String apiMessage = MerossEnum.ApiStatusCode.getMessageByApiStatusCode(apiStatusCode);
+            if (httpStatusCode != 200) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Communication error");
+                logger.warn("Communication resulted in status code {}", httpStatusCode);
+            } else if (apiStatusCode != MerossEnum.ApiStatusCode.OK.value()) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, apiMessage);
+                logger.warn("Communication resulted in error code {} with message {}", apiStatusCode, apiMessage);
+            } else if (!credentialfile.exists() || !deviceFile.exists()) {
                 CompletableFuture.runAsync(() -> {
-                    goOnline();
-                    fetchCredentialsAndSave();
-                });
-            } else if (!deviceFile.exists()) {
-                CompletableFuture.runAsync(() -> {
-                    goOnline();
-                    fetchDevicesAndSave();
+                    connector.fetchCredentialsAndSave();
+                    connector.fetchDevicesAndSave();
                 });
             } else {
                 updateStatus(ThingStatus.ONLINE);
+                logger.info("Successfully logged in");
             }
         });
-    }
-
-    private CloudCredentials fetchCredentialsAndSave() {
-        CloudCredentials credentials = CompletableFuture.supplyAsync(() -> connector.fetchCredentials()).join();
-        String json = new Gson().toJson(credentials);
-        writeFile(json, credentialfile);
-        return credentials;
-    }
-
-    private ArrayList<Device> fetchDevicesAndSave() {
-        ArrayList<Device> devices = CompletableFuture.supplyAsync(() -> connector.fetchDevices()).join();
-        String json = new Gson().toJson(devices);
-        writeFile(json, deviceFile);
-        return devices;
-    }
-
-    /**
-     * @return The user's credentials
-     */
-
-    private void goOnline() {
-        int httpStatusCode = getHttpConnector().login().statusCode();
-        int apiStatusCode = getHttpConnector().apiStatus();
-        getHttpConnector().logout();
-        logger.info("logging out from http connector");
-        String apiMessage = MerossEnum.ApiStatusCode.getMessageByApiStatusCode(apiStatusCode);
-        if (httpStatusCode != 200) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Communication error");
-            logger.warn("Communication resulted in status code {}", httpStatusCode);
-        } else if (apiStatusCode != MerossEnum.ApiStatusCode.OK.value()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, apiMessage);
-            logger.warn("Communication resulted in error code {} with message {}", apiStatusCode, apiMessage);
-        } else {
-            updateStatus(ThingStatus.ONLINE);
-            logger.info("Successfully logged in");
-        }
     }
 
     public static void setConnector(MerossHttpConnector connector) {
@@ -127,30 +89,7 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
         return connector;
     }
 
-    private void writeFile(String content, File file) {
-        file.getParentFile().mkdirs();
-        try {
-            Files.writeString(file.toPath(), content, StandardCharsets.UTF_8);
-        } catch (FileNotFoundException e) {
-            logger.error("Couldn't create file '{}'.", file.getPath(), e);
-        } catch (IOException e) {
-            logger.error("Couldn't write to file '{}'.", file.getPath(), e);
-        }
-    }
-
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-    }
-
-    public void refreshCredentials() {
-        if (credentialfile.exists()) {
-            credentialfile.delete();
-        }
-    }
-
-    public void refreshDevices() {
-        if (deviceFile.exists()) {
-            deviceFile.delete();
-        }
     }
 }
