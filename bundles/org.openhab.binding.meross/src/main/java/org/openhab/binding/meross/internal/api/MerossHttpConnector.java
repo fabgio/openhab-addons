@@ -209,8 +209,9 @@ public class MerossHttpConnector {
 
     public void logout() {
         try {
-            String logoutString = MerossEnum.HttpEndpoint.LOGOUT.value() + getCredentials().domain();
-            Objects.requireNonNull(postResponse(Collections.emptyMap(), apiBaseUrl, logoutString));
+            Objects.requireNonNull(
+                    postResponse(Collections.emptyMap(), apiBaseUrl, MerossEnum.HttpEndpoint.LOGOUT.value()));
+            logger.info("Successfully logged out");
         } catch (MerossException e) {
             logger.debug("Error while logging out", e);
             throw new RuntimeException(e);
