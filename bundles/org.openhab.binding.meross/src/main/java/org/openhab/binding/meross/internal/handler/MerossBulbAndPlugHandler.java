@@ -16,6 +16,7 @@ import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
@@ -61,7 +62,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
             } else
                 updateStatus(ThingStatus.ONLINE);
-            updateChannelStateAsync();
+            scheduler.scheduleWithFixedDelay(this::updateChannelStateAsync, 1, 1, TimeUnit.SECONDS);
         });
     }
 

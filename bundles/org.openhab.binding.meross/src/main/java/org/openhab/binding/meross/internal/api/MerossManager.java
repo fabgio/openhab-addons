@@ -49,11 +49,11 @@ public class MerossManager {
     private void initializeMqttConnector() {
         String clientId = Objects.requireNonNull(MerossMqttConnector.buildClientId());
         MerossMqttConnector.setClientId(clientId);
-        String userId = Objects.requireNonNull(merossHttpConnector.fetchCredentials().userId());
+        String userId = Objects.requireNonNull(merossHttpConnector.getCredentials().userId());
         MerossMqttConnector.setUserId(userId);
-        String key = Objects.requireNonNull(merossHttpConnector.fetchCredentials().key());
+        String key = Objects.requireNonNull(merossHttpConnector.getCredentials().key());
         MerossMqttConnector.setKey(key);
-        String brokerAddress = Objects.requireNonNull(merossHttpConnector.fetchCredentials().mqttDomain());
+        String brokerAddress = Objects.requireNonNull(merossHttpConnector.getCredentials().mqttDomain());
         MerossMqttConnector.setBrokerAddress(brokerAddress);
     }
 
@@ -102,7 +102,7 @@ public class MerossManager {
         executeCommand(deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "OFF");
     }
 
-    public String getSystemAll(String deviceName) {
+    String getSystemAll(String deviceName) {
         initializeMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
