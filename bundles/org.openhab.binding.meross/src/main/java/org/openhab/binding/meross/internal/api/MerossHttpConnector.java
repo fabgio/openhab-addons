@@ -12,15 +12,10 @@
  */
 package org.openhab.binding.meross.internal.api;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -36,7 +31,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.openhab.binding.meross.internal.dto.CloudCredentials;
 import org.openhab.binding.meross.internal.dto.Device;
-import org.openhab.binding.meross.internal.handler.MerossBridgeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,10 +109,9 @@ public class MerossHttpConnector {
     /**
      * @return The http response at login request
      */
-    public HttpResponse<String> login() {
+    private HttpResponse<String> login() {
         try {
             Map<String, String> loginMap = Map.of("email", userName, "password", password);
-
             HttpResponse<String> stringHttpResponse = Objects
                     .requireNonNull(postResponse(loginMap, apiBaseUrl, MerossEnum.HttpEndpoint.LOGIN.value()));
             return stringHttpResponse;
@@ -128,11 +121,17 @@ public class MerossHttpConnector {
         }
     }
 
+    public HttpResponse<String> asyncLoginAndLogout() {
+        var response = CompletableFuture.supplyAsync(this::login).join();
+        logout();
+        return response;
+    }
+
     /**
      * @return the status code from the Meross API
      */
     public int apiStatus() {
-        return JsonParser.parseString(login().body()).getAsJsonObject().get("apiStatus").getAsInt();
+        return JsonParser.parseString(asyncLoginAndLogout().body()).getAsJsonObject().get("apiStatus").getAsInt();
     }
 
     public synchronized CloudCredentials fetchCredentials() {
@@ -145,7 +144,7 @@ public class MerossHttpConnector {
                 throw new RuntimeException(e);
             }
         } else {
-            JsonElement jsonElement = JsonParser.parseString(login().body());
+            JsonElement jsonElement = JsonParser.parseString(asyncLoginAndLogout().body());
             String data = jsonElement.getAsJsonObject().get("data").toString();
             return new Gson().fromJson(data, CloudCredentials.class);
         }
@@ -173,7 +172,7 @@ public class MerossHttpConnector {
      * @return The device UUID
      */
     public String getDevUUIDByDevName(String devName) {
-        return getDevices().stream().filter(device -> device.devName().equals(devName)).map(Device::uuid).findFirst()
+        return fetchDevices().stream().filter(device -> device.devName().equals(devName)).map(Device::uuid).findFirst()
                 .orElseThrow(() -> new RuntimeException("No device found with name: " + devName));
     }
 
@@ -181,66 +180,17 @@ public class MerossHttpConnector {
         this.token = token;
     }
 
-    private String readFile(File file) {
-        String content = null;
-        try {
-            content = Files.readString(file.toPath());
-        } catch (IOException e) {
-            logger.error("Couldn't read from file '{}'.", file.getPath(), e);
-        }
-        return content;
-    }
-
     /**
-     * @return The user's credentials
+     * log out
      */
-    public synchronized CloudCredentials getCredentials() {
-        return new Gson().fromJson(readFile(MerossBridgeHandler.credentialfile), CloudCredentials.class);
-    }
-
-    /**
-     * @return The user's devices
-     */
-    public synchronized ArrayList<Device> getDevices() {
-        TypeToken<ArrayList<Device>> type = new TypeToken<>() {
-        };
-        return new Gson().fromJson(readFile(MerossBridgeHandler.deviceFile), type);
-    }
 
     public void logout() {
+        HttpResponse<String> response;
         try {
-            Objects.requireNonNull(
-                    postResponse(Collections.emptyMap(), apiBaseUrl, MerossEnum.HttpEndpoint.LOGOUT.value()));
-            logger.info("Successfully logged out");
+            response = postResponse(Collections.emptyMap(), apiBaseUrl, MerossEnum.HttpEndpoint.LOGOUT.value());
+            logger.info("URI and path{} ", response.request().uri().getHost() + response.request().uri().getPath());
         } catch (MerossException e) {
-            logger.debug("Error while logging out", e);
             throw new RuntimeException(e);
-        }
-    }
-
-    public CloudCredentials fetchCredentialsAndSave() {
-        CloudCredentials credentials = CompletableFuture.supplyAsync(this::fetchCredentials).join();
-        String json = new Gson().toJson(credentials);
-        writeFile(json, MerossBridgeHandler.credentialfile);
-        return credentials;
-    }
-
-    public ArrayList<Device> fetchDevicesAndSave() {
-        ArrayList<Device> devices = CompletableFuture.supplyAsync(this::fetchDevices).join();
-        String json = new Gson().toJson(devices);
-        writeFile(json, MerossBridgeHandler.deviceFile);
-        return devices;
-    }
-
-    private void writeFile(String content, File file) {
-        file.getParentFile().mkdirs();
-        try {
-            Files.writeString(file.toPath(), content, StandardCharsets.UTF_8);
-            logger.info("Successfully wrote to file {}", file.getAbsolutePath());
-        } catch (FileNotFoundException e) {
-            logger.error("Couldn't create file '{}'.", file.getPath(), e);
-        } catch (IOException e) {
-            logger.error("Couldn't write to file '{}'.", file.getPath(), e);
         }
     }
 }
