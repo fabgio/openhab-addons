@@ -54,7 +54,7 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
     public void initialize() {
         config = getConfigAs(MerossBridgeConfiguration.class);
         scheduler.execute(() -> {
-            connector = new MerossHttpConnector(config.hostname, config.username, config.password);
+            connector = new MerossHttpConnector(config.hostname, config.username, config.password,credentialfile.toString(),deviceFile.toString());
             setConnector(connector);
             logger.info("Connector successfully set");
             int httpStatusCode = getHttpConnector().login().statusCode();

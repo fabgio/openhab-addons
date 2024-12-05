@@ -46,7 +46,7 @@ public class MerossManager {
         this.merossHttpConnector = merossHttpConnector;
     }
 
-    private void initializeMqttConnector() {
+    public void initializeMqttConnector() {
         String clientId = Objects.requireNonNull(MerossMqttConnector.buildClientId());
         MerossMqttConnector.setClientId(clientId);
         String userId = Objects.requireNonNull(merossHttpConnector.getCredentials().userId());
@@ -64,7 +64,7 @@ public class MerossManager {
      * @return The MQTT response
      */
 
-    private void executeCommand(String deviceName, String commandType, String commandMode) {
+    public void executeCommand(String deviceName, String commandType, String commandMode) {
         initializeMqttConnector();
         String deviceUUID = Objects.requireNonNull(merossHttpConnector.getDevUUIDByDevName(deviceName));
         MerossMqttConnector.setDestinationDeviceUUID(deviceUUID);
@@ -92,14 +92,6 @@ public class MerossManager {
                 .getAsJsonArray("togglex");
         JsonObject togglexObject = togglexArray.get(0).getAsJsonObject();
         return togglexObject.get("onoff").getAsInt();
-    }
-
-    public void togglexOn(String deviceName) {
-        executeCommand(deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "ON");
-    }
-
-    public void togglexOff(String deviceName) {
-        executeCommand(deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "OFF");
     }
 
     String getSystemAll(String deviceName) {
