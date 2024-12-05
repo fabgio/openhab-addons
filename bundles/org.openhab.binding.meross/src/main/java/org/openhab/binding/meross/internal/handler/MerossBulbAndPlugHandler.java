@@ -15,8 +15,8 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
@@ -43,6 +43,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
     private final MerossManager manager = new MerossManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
+    private final ScheduledExecutorService updateScheduler = Executors.newSingleThreadScheduledExecutor();
 
     public MerossBulbAndPlugHandler(Thing thing) {
         super(thing);
@@ -62,17 +63,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
             } else
                 updateStatus(ThingStatus.ONLINE);
-            scheduler.scheduleWithFixedDelay(this::updateChannelStateAsync, 1, 1, TimeUnit.SECONDS);
         });
-    }
-
-    private void updateChannelStateAsync() {
-        CompletableFuture.supplyAsync(() -> manager.togglexOnOffStatus(config.deviceName))
-                .thenAccept(this::updateChannelState);
-    }
-
-    void updateChannelState(int status) {
-        updateState(CHANNEL_TOGGLEX, status == 0 ? StringType.valueOf("Off") : StringType.valueOf("On"));
     }
 
     @Override
@@ -90,11 +81,11 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             switch (command.toString()) {
                 case "ON" -> {
                     logger.info("Toggled On");
-                    manager.togglexOn(config.deviceName);
+                    manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "ON");
                 }
                 case "OFF" -> {
                     logger.info("Toggled Off");
-                    manager.togglexOff(config.deviceName);
+                    manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "OFF");
                 }
             }
         } else {

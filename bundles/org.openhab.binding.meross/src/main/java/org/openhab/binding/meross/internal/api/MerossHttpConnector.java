@@ -63,11 +63,18 @@ public class MerossHttpConnector {
     private final String password;
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.of(CONNECTION_TIMEOUT_SECONDS, ChronoUnit.SECONDS)).build();
+    String credentialFile;
+    String deviceFile;
 
-    public MerossHttpConnector(String apiBaseUrl, String userName, String password) {
+
+
+
+    public MerossHttpConnector(String apiBaseUrl, String userName, String password,String credentialFile,String deviceFile) {
         this.apiBaseUrl = apiBaseUrl;
         this.userName = userName;
         this.password = password;
+        this.credentialFile = credentialFile;
+        this.deviceFile = deviceFile;
     }
 
     private HttpResponse<String> postResponse(Map<String, String> paramsData, String uri, String path)
@@ -195,7 +202,7 @@ public class MerossHttpConnector {
      * @return The user's credentials
      */
     public synchronized CloudCredentials getCredentials() {
-        return new Gson().fromJson(readFile(MerossBridgeHandler.credentialfile), CloudCredentials.class);
+        return new Gson().fromJson(readFile(new File(credentialFile)), CloudCredentials.class);
     }
 
     /**
@@ -204,7 +211,7 @@ public class MerossHttpConnector {
     public synchronized ArrayList<Device> getDevices() {
         TypeToken<ArrayList<Device>> type = new TypeToken<>() {
         };
-        return new Gson().fromJson(readFile(MerossBridgeHandler.deviceFile), type);
+        return new Gson().fromJson(readFile(new File(deviceFile)), type);
     }
 
     public void logout() {
