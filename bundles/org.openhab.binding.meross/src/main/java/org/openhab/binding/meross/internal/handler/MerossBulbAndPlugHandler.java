@@ -15,9 +15,6 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossManager;
@@ -43,7 +40,6 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
     private final MerossManager manager = new MerossManager(getHttpConnector());
     private @Nullable MerossBulbAndPlugConfiguration config;
-    private final ScheduledExecutorService updateScheduler = Executors.newSingleThreadScheduledExecutor();
 
     public MerossBulbAndPlugHandler(Thing thing) {
         super(thing);
@@ -76,17 +72,12 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     }
 
     private void handleTogglexChannel(ChannelUID channelUID, Command command) {
-        logger.info("Channel togglex");
         if (command instanceof StringType) {
             switch (command.toString()) {
-                case "ON" -> {
-                    logger.info("Toggled On");
-                    manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "ON");
-                }
-                case "OFF" -> {
-                    logger.info("Toggled Off");
-                    manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "OFF");
-                }
+                case "ON" -> manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(),
+                        "ON");
+                case "OFF" -> manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(),
+                        "OFF");
             }
         } else {
             logger.debug("Unsupported command {} for channel {}", command, channelUID);
