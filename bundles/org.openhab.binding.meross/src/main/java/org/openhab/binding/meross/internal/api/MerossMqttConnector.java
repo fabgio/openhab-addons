@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -60,8 +62,13 @@ public class MerossMqttConnector {
         Mqtt5BlockingClient client = Mqtt5Client.builder().identifier(clientId).serverHost(brokerAddress)
                 .serverPort(SECURE_WEB_SOCKET_PORT).sslWithDefaultConfig().buildBlocking();
 
-        client.connectWith().cleanStart(false).simpleAuth().username(userId)
-                .password(hashedPassword.getBytes(StandardCharsets.UTF_8)).applySimpleAuth().noSessionExpiry().send();
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+        executor.execute(new ConnectTask(client, hashedPassword));
+        try {
+            executor.awaitTermination(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         Mqtt5Subscribe subscribeMessage = Mqtt5Subscribe.builder().addSubscription().topicFilter(buildClientUserTopic())
                 .qos(MqttQos.AT_LEAST_ONCE).applySubscription().addSubscription()
@@ -82,9 +89,6 @@ public class MerossMqttConnector {
                 if (mqtt5PublishResponse.getPayload().isPresent()) {
                     incomingResponse = StandardCharsets.UTF_8.decode(mqtt5PublishResponse.getPayload().get())
                             .toString();
-                    logger.debug("JSON Response: {}", incomingResponse);
-                } else {
-                    logger.debug("Response is null");
                 }
             }
         } catch (InterruptedException e) {
@@ -93,6 +97,22 @@ public class MerossMqttConnector {
 
         client.disconnect();
         return incomingResponse;
+    }
+
+    private static class ConnectTask implements Runnable {
+        Mqtt5BlockingClient client;
+        String hashedPassword;
+
+        public ConnectTask(Mqtt5BlockingClient client, String hashedPassword) {
+            this.client = client;
+            this.hashedPassword = hashedPassword;
+        }
+
+        @Override
+        public void run() {
+            client.connectWith().cleanStart(false).simpleAuth().username(userId)
+                    .password(hashedPassword.getBytes(StandardCharsets.UTF_8)).applySimpleAuth().send();
+        }
     }
 
     /**

@@ -63,13 +63,10 @@ public class MerossHttpConnector {
     private final String password;
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.of(CONNECTION_TIMEOUT_SECONDS, ChronoUnit.SECONDS)).build();
-    String credentialFile;
-    String deviceFile;
+    private final String credentialFile;
+    private final String deviceFile;
 
-
-
-
-    public MerossHttpConnector(String apiBaseUrl, String userName, String password,String credentialFile,String deviceFile) {
+    MerossHttpConnector(String apiBaseUrl, String userName, String password, String credentialFile, String deviceFile) {
         this.apiBaseUrl = apiBaseUrl;
         this.userName = userName;
         this.password = password;
@@ -110,7 +107,6 @@ public class MerossHttpConnector {
         try {
             return client.sendAsync(postRequest, HttpResponse.BodyHandlers.ofString()).get();
         } catch (InterruptedException | ExecutionException e) {
-            logger.debug("Error while posting data", e);
             throw new MerossException("Error while posting data", e);
         }
     }
@@ -218,9 +214,7 @@ public class MerossHttpConnector {
         try {
             Objects.requireNonNull(
                     postResponse(Collections.emptyMap(), apiBaseUrl, MerossEnum.HttpEndpoint.LOGOUT.value()));
-            logger.info("Successfully logged out");
         } catch (MerossException e) {
-            logger.debug("Error while logging out", e);
             throw new RuntimeException(e);
         }
     }
@@ -243,7 +237,6 @@ public class MerossHttpConnector {
         file.getParentFile().mkdirs();
         try {
             Files.writeString(file.toPath(), content, StandardCharsets.UTF_8);
-            logger.info("Successfully wrote to file {}", file.getAbsolutePath());
         } catch (FileNotFoundException e) {
             logger.error("Couldn't create file '{}'.", file.getPath(), e);
         } catch (IOException e) {

@@ -46,7 +46,7 @@ public class MerossManager {
         this.merossHttpConnector = merossHttpConnector;
     }
 
-    public void initializeMqttConnector() {
+    public void initializeMerossMqttConnector() {
         String clientId = Objects.requireNonNull(MerossMqttConnector.buildClientId());
         MerossMqttConnector.setClientId(clientId);
         String userId = Objects.requireNonNull(merossHttpConnector.getCredentials().userId());
@@ -65,7 +65,7 @@ public class MerossManager {
      */
 
     public void executeCommand(String deviceName, String commandType, String commandMode) {
-        initializeMqttConnector();
+        initializeMerossMqttConnector();
         String deviceUUID = Objects.requireNonNull(merossHttpConnector.getDevUUIDByDevName(deviceName));
         MerossMqttConnector.setDestinationDeviceUUID(deviceUUID);
         String requestTopic = MerossMqttConnector.buildDeviceRequestTopic(deviceUUID);
@@ -95,7 +95,7 @@ public class MerossManager {
     }
 
     String getSystemAll(String deviceName) {
-        initializeMqttConnector();
+        initializeMerossMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
         byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
@@ -104,7 +104,7 @@ public class MerossManager {
     }
 
     private HashSet<String> getAbilities(String deviceName) {
-        initializeMqttConnector();
+        initializeMerossMqttConnector();
         String requestTopic = MerossMqttConnector
                 .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
         byte[] systemAbilityMessage = MerossMqttConnector.buildMqttMessage("GET",
