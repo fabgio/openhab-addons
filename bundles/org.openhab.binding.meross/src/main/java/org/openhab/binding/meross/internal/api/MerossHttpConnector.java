@@ -63,10 +63,10 @@ public class MerossHttpConnector {
     private final String password;
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.of(CONNECTION_TIMEOUT_SECONDS, ChronoUnit.SECONDS)).build();
-    private final String credentialFile;
-    private final String deviceFile;
+    private final File credentialFile;
+    private final File deviceFile;
 
-    MerossHttpConnector(String apiBaseUrl, String userName, String password, String credentialFile, String deviceFile) {
+    MerossHttpConnector(String apiBaseUrl, String userName, String password, File credentialFile, File deviceFile) {
         this.apiBaseUrl = apiBaseUrl;
         this.userName = userName;
         this.password = password;
@@ -121,10 +121,7 @@ public class MerossHttpConnector {
     public HttpResponse<String> login() {
         try {
             Map<String, String> loginMap = Map.of("email", userName, "password", password);
-
-            HttpResponse<String> stringHttpResponse = Objects
-                    .requireNonNull(postResponse(loginMap, apiBaseUrl, MerossEnum.HttpEndpoint.LOGIN.value()));
-            return stringHttpResponse;
+            return Objects.requireNonNull(postResponse(loginMap, apiBaseUrl, MerossEnum.HttpEndpoint.LOGIN.value()));
         } catch (MerossException e) {
             logger.debug("Error while login", e);
             throw new RuntimeException(e);
@@ -177,14 +174,14 @@ public class MerossHttpConnector {
      */
     public String getDevUUIDByDevName(String devName) {
         return getDevices().stream().filter(device -> device.devName().equals(devName)).map(Device::uuid).findFirst()
-                .orElseThrow(() -> new RuntimeException("No device found with name: " + devName));
+                .orElse("");
     }
 
     private void setToken(String token) {
         this.token = token;
     }
 
-    private String readFile(File file) {
+    private synchronized String readFile(File file) {
         String content = null;
         try {
             content = Files.readString(file.toPath());
@@ -197,17 +194,17 @@ public class MerossHttpConnector {
     /**
      * @return The user's credentials
      */
-    public synchronized CloudCredentials getCredentials() {
-        return new Gson().fromJson(readFile(new File(credentialFile)), CloudCredentials.class);
+    public CloudCredentials getCredentials() {
+        return new Gson().fromJson(readFile(new File(String.valueOf(credentialFile))), CloudCredentials.class);
     }
 
     /**
      * @return The user's devices
      */
-    public synchronized ArrayList<Device> getDevices() {
+    public ArrayList<Device> getDevices() {
         TypeToken<ArrayList<Device>> type = new TypeToken<>() {
         };
-        return new Gson().fromJson(readFile(new File(deviceFile)), type);
+        return new Gson().fromJson(readFile(new File(String.valueOf(deviceFile))), type);
     }
 
     public void logout() {
@@ -219,18 +216,16 @@ public class MerossHttpConnector {
         }
     }
 
-    public CloudCredentials fetchCredentialsAndSave() {
+    public void fetchCredentialsAndSave() {
         CloudCredentials credentials = CompletableFuture.supplyAsync(this::fetchCredentials).join();
         String json = new Gson().toJson(credentials);
         writeFile(json, MerossBridgeHandler.credentialfile);
-        return credentials;
     }
 
-    public ArrayList<Device> fetchDevicesAndSave() {
+    public void fetchDevicesAndSave() {
         ArrayList<Device> devices = CompletableFuture.supplyAsync(this::fetchDevices).join();
         String json = new Gson().toJson(devices);
         writeFile(json, MerossBridgeHandler.deviceFile);
-        return devices;
     }
 
     private void writeFile(String content, File file) {
