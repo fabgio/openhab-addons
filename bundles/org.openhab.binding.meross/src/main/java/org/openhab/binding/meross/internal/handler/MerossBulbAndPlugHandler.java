@@ -13,7 +13,8 @@
 package org.openhab.binding.meross.internal.handler;
 
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
-import static org.openhab.binding.meross.internal.handler.MerossBridgeHandler.getHttpConnector;
+
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
-    private final MerossManager manager = new MerossManager(getHttpConnector());
+    private final MerossManager manager = new MerossManager(MerossBridgeHandler.connector);
     private @Nullable MerossBulbAndPlugConfiguration config;
 
     public MerossBulbAndPlugHandler(Thing thing) {
@@ -57,8 +58,14 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             int onlineStatus = manager.onlineStatus(config.deviceName);
             if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
-            } else
+            } else if (MerossBridgeHandler.connector.getDevUUIDByDevName(config.deviceName).isEmpty()) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                        "No device found with that name");
+            } else {
                 updateStatus(ThingStatus.ONLINE);
+            }
+            CompletableFuture.runAsync(() -> MerossBridgeHandler.connector.fetchDevicesAndSave());
+            MerossBridgeHandler.connector.logout();
         });
     }
 
@@ -74,10 +81,10 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
     private void handleTogglexChannel(ChannelUID channelUID, Command command) {
         if (command instanceof StringType) {
             switch (command.toString()) {
-                case "ON" -> manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(),
-                        "ON");
-                case "OFF" -> manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(),
-                        "OFF");
+                case "ON" ->
+                    manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "ON");
+                case "OFF" ->
+                    manager.executeCommand(config.deviceName, MerossEnum.Namespace.CONTROL_TOGGLEX.name(), "OFF");
             }
         } else {
             logger.debug("Unsupported command {} for channel {}", command, channelUID);

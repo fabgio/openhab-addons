@@ -13,6 +13,8 @@
 
 package org.openhab.binding.meross.internal.api;
 
+import java.io.File;
+
 /**
  * The {@link MerossHttpConnectorBuilder} class is a builder for MerossHttpConnector
  *
@@ -22,8 +24,8 @@ public class MerossHttpConnectorBuilder {
     private String apiBaseUrl;
     private String userName;
     private String password;
-    private String credentialFile;
-    private String deviceFile;
+    private File credentialFile;
+    private File deviceFile;
 
     public MerossHttpConnectorBuilder setApiBaseUrl(String apiBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
@@ -40,12 +42,12 @@ public class MerossHttpConnectorBuilder {
         return this;
     }
 
-    public MerossHttpConnectorBuilder setCredentialFile(String credentialFile) {
+    public MerossHttpConnectorBuilder setCredentialFile(File credentialFile) {
         this.credentialFile = credentialFile;
         return this;
     }
 
-    public MerossHttpConnectorBuilder setDeviceFile(String deviceFile) {
+    public MerossHttpConnectorBuilder setDeviceFile(File deviceFile) {
         this.deviceFile = deviceFile;
         return this;
     }
