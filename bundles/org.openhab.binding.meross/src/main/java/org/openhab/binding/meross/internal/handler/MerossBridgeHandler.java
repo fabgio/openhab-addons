@@ -69,9 +69,9 @@ public class MerossBridgeHandler extends BaseBridgeHandler {
                 logger.warn("Communication resulted in error code {} with message {}", apiStatusCode, apiMessage);
             } else {
                 updateStatus(ThingStatus.ONLINE);
+                CompletableFuture.runAsync(() -> connector.fetchCredentialsAndSave());
+                connector.logout();
             }
-            CompletableFuture.runAsync(() -> connector.fetchCredentialsAndSave());
-            connector.logout();
         });
     }
 
