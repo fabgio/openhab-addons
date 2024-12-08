@@ -63,9 +63,9 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
                         "No device found with that name");
             } else {
                 updateStatus(ThingStatus.ONLINE);
+                CompletableFuture.runAsync(() -> MerossBridgeHandler.connector.fetchDevicesAndSave());
+                MerossBridgeHandler.connector.logout();
             }
-            CompletableFuture.runAsync(() -> MerossBridgeHandler.connector.fetchDevicesAndSave());
-            MerossBridgeHandler.connector.logout();
         });
     }
 
