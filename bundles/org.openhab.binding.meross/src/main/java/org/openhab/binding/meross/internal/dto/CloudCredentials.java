@@ -15,7 +15,7 @@ package org.openhab.binding.meross.internal.dto;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * The {@link CloudCredentials} class is a record holding cloud credentials 's components
+ * The {@link CloudCredentials} class is a record holding cloud credentials' components
  *
  * @author Giovanni Fabiani - Initial contribution
  */
