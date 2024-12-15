@@ -27,6 +27,13 @@ public class MerossHttpConnectorBuilder {
     private File credentialFile;
     private File deviceFile;
 
+    private MerossHttpConnectorBuilder() {
+    }
+
+    public static MerossHttpConnectorBuilder newBuilder() {
+        return new MerossHttpConnectorBuilder();
+    }
+
     public MerossHttpConnectorBuilder setApiBaseUrl(String apiBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
         return this;
