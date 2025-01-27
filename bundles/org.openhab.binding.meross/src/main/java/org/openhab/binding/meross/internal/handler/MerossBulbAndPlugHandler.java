@@ -14,6 +14,9 @@ package org.openhab.binding.meross.internal.handler;
 
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossManager;
@@ -36,6 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 
 public class MerossBulbAndPlugHandler extends BaseThingHandler {
+    private static final long REFRESH_INTERVAL = 1; // seconds
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
     private final MerossManager manager = new MerossManager(MerossBridgeHandler.connector);
     private @Nullable MerossBulbAndPlugConfiguration config;
@@ -52,18 +56,16 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
             return;
         }
         config = getConfigAs(MerossBulbAndPlugConfiguration.class);
-        scheduler.execute(() -> {
-            int onlineStatus = manager.onlineStatus(config.deviceName);
-            if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
-            } else if (MerossBridgeHandler.connector.getDevUUIDByDevName(config.deviceName) == null) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                        "No device found with that name");
-            } else {
-                updateStatus(ThingStatus.ONLINE);
-                MerossBridgeHandler.connector.logout();
-            }
-        });
+        int onlineStatus = manager.onlineStatus(config.deviceName);
+        if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
+        } else if (MerossBridgeHandler.connector.getDevUUIDByDevName(config.deviceName) == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No device found with that name");
+        } else {
+            updateStatus(ThingStatus.ONLINE);
+            MerossBridgeHandler.connector.logout();
+        }
+        scheduler.scheduleAtFixedRate(this::updateChannelStateImp, 0, REFRESH_INTERVAL, TimeUnit.SECONDS);
     }
 
     @Override
@@ -86,5 +88,18 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         } else {
             logger.debug("Unsupported command {} for channel {}", command, channelUID);
         }
+    }
+
+    private void updateChannelState(int onOffStatus) {
+        if (onOffStatus == MerossEnum.OnOffStatus.OFF.value()) {
+            updateState(CHANNEL_TOGGLEX, new StringType("Off"));
+        } else if (onOffStatus == MerossEnum.OnOffStatus.ON.value()) {
+            updateState(CHANNEL_TOGGLEX, new StringType("On"));
+        }
+    }
+
+    void updateChannelStateImp() {
+        CompletableFuture.supplyAsync(() -> manager.togglexOnOffStatus(config.deviceName))
+                .thenAccept(this::updateChannelState).join();
     }
 }
