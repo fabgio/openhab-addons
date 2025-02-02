@@ -16,12 +16,12 @@ package org.openhab.binding.meross.internal.config;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * The {@link MerossBulbAndPlugConfiguration} class contains fields mapping bulb and plug configuration parameters.
+ * The {@link MerossThingConfiguration} class contains fields mapping bulb and plug configuration parameters.
  *
  * @author Giovanni Fabiani - Initial contribution
  */
 
 @NonNullByDefault
-public class MerossBulbAndPlugConfiguration {
+public class MerossThingConfiguration {
     public String deviceName = "";
 }

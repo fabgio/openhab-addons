@@ -19,7 +19,7 @@ import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossMqttConnector;
 
 /**
- * The {@link Command} interface is responsible for implementing togglex command type
+ * The {@link TogglexCommand} claas is responsible for he concrete implementation of togglex command types
  *
  *
  * @author Giovanni Fabiani - Initial contribution

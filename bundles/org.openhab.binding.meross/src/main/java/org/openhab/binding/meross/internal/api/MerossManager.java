@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.openhab.binding.meross.internal.command.Command;
 import org.openhab.binding.meross.internal.factory.ModeFactory;
@@ -40,7 +39,6 @@ import com.google.gson.reflect.TypeToken;
  */
 
 public class MerossManager {
-    public final AtomicBoolean isTogglexOn = new AtomicBoolean(false);
     private static final Logger logger = LoggerFactory.getLogger(MerossManager.class);
     private final MerossHttpConnector merossHttpConnector;
 

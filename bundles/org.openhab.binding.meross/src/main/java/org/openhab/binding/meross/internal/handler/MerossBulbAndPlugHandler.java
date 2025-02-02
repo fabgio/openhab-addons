@@ -17,32 +17,23 @@ import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
-import org.openhab.binding.meross.internal.api.MerossManager;
-import org.openhab.binding.meross.internal.config.MerossBulbAndPlugConfiguration;
 import org.openhab.core.library.types.StringType;
-import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
-import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.ThingStatusDetail;
-import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link MerossBulbAndPlugHandler} is responsible for handling http communication with plugs and bulbs
+ * The {@link MerossBulbAndPlugHandler} class is responsible for handling http communication with plugs and bulbs
  *
  * @author Giovanni Fabiani - Initial contribution
  */
 
-public class MerossBulbAndPlugHandler extends BaseThingHandler {
-    private static final long REFRESH_INTERVAL = 1; // seconds
+public class MerossBulbAndPlugHandler extends MerossThingHandler {
+    private static final long REFRESH_INTERVAL = 500; // milliseconds
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
-    private final MerossManager manager = new MerossManager(MerossBridgeHandler.connector);
-    private @Nullable MerossBulbAndPlugConfiguration config;
 
     public MerossBulbAndPlugHandler(Thing thing) {
         super(thing);
@@ -50,22 +41,8 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
 
     @Override
     public void initialize() {
-        Bridge bridge = getBridge();
-        if (bridge == null || !(bridge.getHandler() instanceof MerossBridgeHandler)) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Bridge not set");
-            return;
-        }
-        config = getConfigAs(MerossBulbAndPlugConfiguration.class);
-        int onlineStatus = manager.onlineStatus(config.deviceName);
-        if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
-        } else if (MerossBridgeHandler.connector.getDevUUIDByDevName(config.deviceName) == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No device found with that name");
-        } else {
-            updateStatus(ThingStatus.ONLINE);
-            MerossBridgeHandler.connector.logout();
-        }
-        scheduler.scheduleAtFixedRate(this::updateChannelStateImp, 0, REFRESH_INTERVAL, TimeUnit.SECONDS);
+        super.initialize();
+        scheduler.scheduleAtFixedRate(this::updateChannelStateAsync, 0, REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -98,7 +75,7 @@ public class MerossBulbAndPlugHandler extends BaseThingHandler {
         }
     }
 
-    void updateChannelStateImp() {
+    private void updateChannelStateAsync() {
         CompletableFuture.supplyAsync(() -> manager.togglexOnOffStatus(config.deviceName))
                 .thenAccept(this::updateChannelState).join();
     }
