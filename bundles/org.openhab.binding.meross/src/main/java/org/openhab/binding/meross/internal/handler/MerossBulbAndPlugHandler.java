@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 
 public class MerossBulbAndPlugHandler extends MerossThingHandler {
-    private static final long REFRESH_INTERVAL = 500; // milliseconds
+    private static final long REFRESH_INTERVAL = 1000; // milliseconds
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
 
     public MerossBulbAndPlugHandler(Thing thing) {
@@ -42,7 +42,7 @@ public class MerossBulbAndPlugHandler extends MerossThingHandler {
     @Override
     public void initialize() {
         super.initialize();
-        scheduler.scheduleAtFixedRate(this::updateChannelStateAsync, 0, REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
+        scheduler.scheduleWithFixedDelay(this::updateChannelStateAsync, 200, REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     @Override

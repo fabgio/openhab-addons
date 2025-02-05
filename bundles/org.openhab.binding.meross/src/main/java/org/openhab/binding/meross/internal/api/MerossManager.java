@@ -12,10 +12,7 @@
  */
 package org.openhab.binding.meross.internal.api;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.*;
 
 import org.openhab.binding.meross.internal.command.Command;
 import org.openhab.binding.meross.internal.factory.ModeFactory;
@@ -79,19 +76,31 @@ public class MerossManager {
     }
 
     public int onlineStatus(String deviceName) {
-        JsonObject jsonObject = JsonParser.parseString(getSystemAll(deviceName)).getAsJsonObject();
-        final JsonObject asJsonObject = jsonObject.getAsJsonObject("payload").getAsJsonObject("all")
-                .getAsJsonObject("system").getAsJsonObject("online");
-        JsonElement asJsonElement = asJsonObject.get("status");
-        return asJsonElement.getAsInt();
+        String systemAll = getSystemAll(deviceName);
+        if (systemAll == null) {
+            logger.warn("SystemAll is Null");
+        } else {
+            JsonObject jsonObject = JsonParser.parseString(getSystemAll(deviceName)).getAsJsonObject();
+            final JsonObject asJsonObject = jsonObject.getAsJsonObject("payload").getAsJsonObject("all")
+                    .getAsJsonObject("system").getAsJsonObject("online");
+            JsonElement asJsonElement = asJsonObject.get("status");
+            return asJsonElement.getAsInt();
+        }
+        return 0;
     }
 
     public int togglexOnOffStatus(String deviceName) {
-        JsonObject jsonObject = JsonParser.parseString(getSystemAll(deviceName)).getAsJsonObject();
-        JsonArray togglexArray = jsonObject.getAsJsonObject("payload").getAsJsonObject("all").getAsJsonObject("digest")
-                .getAsJsonArray("togglex");
-        JsonObject togglexObject = togglexArray.get(0).getAsJsonObject();
-        return togglexObject.get("onoff").getAsInt();
+        String systemAll = getSystemAll(deviceName);
+        if (systemAll == null) {
+            logger.warn("SystemAll is null");
+        } else {
+            JsonObject jsonObject = JsonParser.parseString(getSystemAll(deviceName)).getAsJsonObject();
+            JsonArray togglexArray = jsonObject.getAsJsonObject("payload").getAsJsonObject("all")
+                    .getAsJsonObject("digest").getAsJsonArray("togglex");
+            JsonObject togglexObject = togglexArray.get(0).getAsJsonObject();
+            return togglexObject.get("onoff").getAsInt();
+        }
+        return 0;
     }
 
     String getSystemAll(String deviceName) {
