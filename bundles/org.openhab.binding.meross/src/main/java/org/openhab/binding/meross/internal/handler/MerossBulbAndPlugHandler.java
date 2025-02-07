@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 
 public class MerossBulbAndPlugHandler extends MerossThingHandler {
-    private static final long REFRESH_INTERVAL = 1000; // milliseconds
+    private static final long REFRESH_INTERVAL = 500; // milliseconds
     private final Logger logger = LoggerFactory.getLogger(MerossBulbAndPlugHandler.class);
 
     public MerossBulbAndPlugHandler(Thing thing) {
