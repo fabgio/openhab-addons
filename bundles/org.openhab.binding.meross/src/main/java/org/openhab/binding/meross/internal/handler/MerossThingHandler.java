@@ -18,6 +18,8 @@ import org.openhab.binding.meross.internal.api.MerossManager;
 import org.openhab.binding.meross.internal.config.MerossThingConfiguration;
 import org.openhab.core.thing.*;
 import org.openhab.core.thing.binding.BaseThingHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@link MerossThingHandler} abstract class is responsible for handling basic communication with devices. It
@@ -27,6 +29,7 @@ import org.openhab.core.thing.binding.BaseThingHandler;
  */
 
 abstract class MerossThingHandler extends BaseThingHandler {
+    private final Logger logger = LoggerFactory.getLogger(MerossThingHandler.class);
     @Nullable
     MerossThingConfiguration config;
     final MerossManager manager = new MerossManager(MerossBridgeHandler.connector);
@@ -38,19 +41,30 @@ abstract class MerossThingHandler extends BaseThingHandler {
     @Override
     public void initialize() {
         Bridge bridge = getBridge();
-        if (bridge == null || !(bridge.getHandler() instanceof MerossBridgeHandler)) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Bridge not set");
-            return;
+        if (bridge != null) {
+            if (bridge.getStatus() == ThingStatus.ONLINE) {
+                config = getConfigAs(MerossThingConfiguration.class);
+                int onlineStatus = manager.onlineStatus(config.deviceName);
+                if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device is offline");
+                } else if (MerossBridgeHandler.connector.getDevUUIDByDevName(config.deviceName) == null) {
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                            "No device found with that name");
+                } else {
+                    updateStatus(ThingStatus.ONLINE);
+                    MerossBridgeHandler.connector.logout();
+                }
+            } else {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Bridge is offline");
+            }
         }
-        config = getConfigAs(MerossThingConfiguration.class);
-        int onlineStatus = manager.onlineStatus(config.deviceName);
-        if (onlineStatus != MerossEnum.OnlineStatus.ONLINE.value()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Device offline");
-        } else if (MerossBridgeHandler.connector.getDevUUIDByDevName(config.deviceName) == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No device found with that name");
-        } else {
-            updateStatus(ThingStatus.ONLINE);
-            MerossBridgeHandler.connector.logout();
-        }
+    }
+
+    boolean isDisposed() {
+        Thing thing = getThing();
+        var status = thing.getStatus();
+        return status == ThingStatus.OFFLINE || status == ThingStatus.UNKNOWN || status == ThingStatus.INITIALIZING
+                || status == ThingStatus.REMOVED || status == ThingStatus.REMOVING
+                || status == ThingStatus.UNINITIALIZED;
     }
 }

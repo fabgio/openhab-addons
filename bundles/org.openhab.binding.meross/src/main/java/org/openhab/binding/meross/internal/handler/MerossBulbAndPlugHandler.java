@@ -45,8 +45,9 @@ public class MerossBulbAndPlugHandler extends MerossThingHandler {
     @Override
     public void initialize() {
         super.initialize();
-        pollingJob = scheduler.scheduleWithFixedDelay(this::updateChannelStateAsync, INITIAL_DELAY, REFRESH_INTERVAL,
-                TimeUnit.MILLISECONDS);
+        if (!isDisposed())
+            pollingJob = scheduler.scheduleWithFixedDelay(this::updateChannelStateAsync, INITIAL_DELAY,
+                    REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -89,12 +90,12 @@ public class MerossBulbAndPlugHandler extends MerossThingHandler {
 
     @Override
     public void dispose() {
+        super.dispose();
         ScheduledFuture<?> job = pollingJob;
         if (job != null) {
             job.cancel(true);
             pollingJob = null;
             logger.info("dispose scheduler stopped");
         }
-        super.dispose();
     }
 }
