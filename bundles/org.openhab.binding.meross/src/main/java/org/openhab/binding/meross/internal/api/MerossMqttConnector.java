@@ -16,10 +16,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,24 +42,24 @@ import com.hivemq.client.mqtt.mqtt5.message.subscribe.Mqtt5Subscribe;
  *
  * @author Giovanni Fabiani - Initial contribution
  */
-
+@NonNullByDefault
 public class MerossMqttConnector {
     private final static Logger logger = LoggerFactory.getLogger(MerossMqttConnector.class);
     private static final int SECURE_WEB_SOCKET_PORT = 443;
     private static final int RECEPTION_TIMEOUT_SECONDS = 60;
     private static final int KEEP_ALIVE_SECONDS = 60;
-    private static String brokerAddress;
-    private static String userId;
-    private static String clientId;
-    private static String key;
-    private static String destinationDeviceUUID;
+    private static @Nullable String brokerAddress;
+    private static @Nullable String userId;
+    private static @Nullable String clientId;
+    private static @Nullable String key;
+    private static @Nullable String destinationDeviceUUID;
 
     /**
      * @param message The mqtt message
      * @param requestTopic The request topic
      * @return The mqtt response
      */
-    static synchronized String publishMqttMessage(byte[] message, String requestTopic) {
+    static synchronized @Nullable String publishMqttMessage(byte[] message, String requestTopic) {
         String clearPassword = "%s%s".formatted(userId, key);
         String hashedPassword = MD5Util.getMD5String(clearPassword);
 
@@ -131,7 +134,7 @@ public class MerossMqttConnector {
         headerMap.put("sign", signature);
         headerMap.put("timestamp", timestamp);
         headerMap.put("triggerSrc", "Android");
-        headerMap.put("uuid", destinationDeviceUUID);
+        headerMap.put("uuid", Objects.requireNonNull(destinationDeviceUUID));
         dataMap.put("header", headerMap);
         dataMap.put("payload", payload);
         String jsonString = new Gson().toJson(dataMap);
@@ -144,7 +147,7 @@ public class MerossMqttConnector {
      *
      * @return The client user topic
      */
-    public static String buildClientUserTopic() {
+    public static @Nullable String buildClientUserTopic() {
         return "/app/" + getUserId() + "/subscribe";
     }
 
@@ -189,7 +192,7 @@ public class MerossMqttConnector {
     }
 
     public static String getUserId() {
-        return userId;
+        return Objects.requireNonNull(userId);
     }
 
     public static void setBrokerAddress(String brokerAddress) {

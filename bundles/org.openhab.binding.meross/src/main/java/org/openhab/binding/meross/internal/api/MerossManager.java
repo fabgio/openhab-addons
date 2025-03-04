@@ -18,6 +18,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.command.Command;
 import org.openhab.binding.meross.internal.factory.ModeFactory;
 import org.openhab.binding.meross.internal.factory.TypeFactory;
@@ -37,7 +39,7 @@ import com.google.gson.reflect.TypeToken;
  *
  * @author Giovanni Fabiani - Initial contribution
  */
-
+@NonNullByDefault
 public class MerossManager {
     private static final Logger logger = LoggerFactory.getLogger(MerossManager.class);
     private final MerossHttpConnector merossHttpConnector;
@@ -71,7 +73,7 @@ public class MerossManager {
 
     public void executeCommand(String deviceName, String commandType, String commandMode) {
         String uuid = merossHttpConnector.getDevUUIDByDevName(deviceName);
-        if (uuid == null) {
+        if (uuid.isEmpty()) {
             logger.error("No device found with name {}", deviceName);
             return;
         }
@@ -88,45 +90,65 @@ public class MerossManager {
         MerossMqttConnector.publishMqttMessage(commandMessage, requestTopic);
     }
 
-    public JsonElement onlineStatus(String deviceName) {
+    public String onlineStatus(String deviceName) {
         String systemAll = getSystemAll(deviceName);
-        JsonObject jsonObject = JsonParser.parseString(systemAll).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(Objects.requireNonNull(systemAll)).getAsJsonObject();
         final JsonObject asJsonObject = jsonObject.getAsJsonObject("payload").getAsJsonObject("all")
                 .getAsJsonObject("system").getAsJsonObject("online");
         Optional<JsonElement> jsonElement = Optional.of(asJsonObject.get("status"));
-        return jsonElement.orElse(null);
+        return jsonElement.get().getAsString();
     }
 
-    public JsonElement togglexOnOffStatus(String deviceName) {
+    public String togglexOnOffStatus(String deviceName) {
         String systemAll = getSystemAll(deviceName);
-        JsonObject jsonObject = JsonParser.parseString(systemAll).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(Objects.requireNonNull(systemAll)).getAsJsonObject();
         JsonArray togglexArray = jsonObject.getAsJsonObject("payload").getAsJsonObject("all").getAsJsonObject("digest")
                 .getAsJsonArray("togglex");
         Optional<JsonElement> jsonElement = Optional.of(togglexArray.get(0).getAsJsonObject().get("onoff"));
-        return jsonElement.orElse(null);
+        return jsonElement.get().toString();
     }
 
-    public String getSystemAll(String deviceName) {
+    public @Nullable String getSystemAll(String deviceName) {
         initializeMerossMqttConnector();
         String uuid = merossHttpConnector.getDevUUIDByDevName(deviceName);
-        if (uuid == null) {
+        if (uuid != null && uuid.isEmpty()) {
             logger.error("No device found with name {}", deviceName);
-            return null;
+            return "";
         }
-        String requestTopic = MerossMqttConnector.buildDeviceRequestTopic(uuid);
+        String requestTopic = null;
+        if (uuid != null) {
+            requestTopic = MerossMqttConnector.buildDeviceRequestTopic(uuid);
+        }
         byte[] systemAllMessage = MerossMqttConnector.buildMqttMessage("GET", MerossEnum.Namespace.SYSTEM_ALL.value(),
                 Collections.emptyMap());
-        return MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
+        String s = null;
+        if (requestTopic != null) {
+            s = MerossMqttConnector.publishMqttMessage(systemAllMessage, requestTopic);
+        }
+        if (s != null && !s.isEmpty()) {
+            return s;
+        }
+
+        return "";
     }
 
-    private HashSet<String> getAbilities(String deviceName) {
+    private @Nullable HashSet<String> getAbilities(String deviceName) {
         initializeMerossMqttConnector();
-        String requestTopic = MerossMqttConnector
-                .buildDeviceRequestTopic(merossHttpConnector.getDevUUIDByDevName(deviceName));
+        String uuid = merossHttpConnector.getDevUUIDByDevName(deviceName);
+        if (uuid != null && uuid.isEmpty()) {
+            return null;
+        }
+        String requestTopic = null;
+        if (uuid != null) {
+            requestTopic = MerossMqttConnector.buildDeviceRequestTopic(uuid);
+        }
         byte[] systemAbilityMessage = MerossMqttConnector.buildMqttMessage("GET",
                 MerossEnum.Namespace.SYSTEM_ABILITY.value(), Collections.emptyMap());
-        JsonElement digestElement = JsonParser.parseString(
-                Objects.requireNonNull(MerossMqttConnector.publishMqttMessage(systemAbilityMessage, requestTopic)));
+        JsonElement digestElement = null;
+        if (requestTopic != null) {
+            digestElement = JsonParser.parseString(
+                    Objects.requireNonNull(MerossMqttConnector.publishMqttMessage(systemAbilityMessage, requestTopic)));
+        }
         String abilityString = digestElement.getAsJsonObject().get("payload").getAsJsonObject().get("ability")
                 .getAsJsonObject().toString();
         TypeToken<HashMap<String, HashMap<String, String>>> type = new TypeToken<>() {

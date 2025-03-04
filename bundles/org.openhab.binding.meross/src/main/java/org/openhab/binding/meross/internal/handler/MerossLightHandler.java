@@ -14,8 +14,9 @@ package org.openhab.binding.meross.internal.handler;
 
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 
+import java.util.Objects;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossManager;
 import org.openhab.binding.meross.internal.config.MerossLightConfiguration;
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class MerossLightHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossLightHandler.class);
     private MerossLightConfiguration config = new MerossLightConfiguration();
-    final @Nullable MerossManager manager = new MerossManager(MerossBridgeHandler.connector);
+    final MerossManager manager = new MerossManager(Objects.requireNonNull(MerossBridgeHandler.connector));
 
     public MerossLightHandler(Thing thing) {
         super(thing);
@@ -59,19 +60,19 @@ public class MerossLightHandler extends BaseThingHandler {
         initializeBridge(bridge.getStatus());
         String uuid = connector.getDevUUIDByDevName(config.lightName);
         logger.info("checking for uuid....   {}", uuid);
-        if (uuid == null) {
+        if (uuid != null && uuid.isEmpty()) {
             logger.warn("No device found with name {}", config.lightName);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "No device found with name " + config.lightName);
             return;
         }
 
         var status = manager.onlineStatus(config.lightName);
-        if (status == null) {
+        if (status.isEmpty()) {
             logger.warn("Online status is null");
             return;
         }
         logger.info("OnlineStatus: {}", status);
-        initializeLight(status.getAsInt());
+        initializeLight(Integer.parseInt(status));
         initializeBridge(bridge.getStatus());
     }
 

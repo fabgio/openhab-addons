@@ -146,7 +146,7 @@ public class MerossHttpConnector {
                 .map(Device::uuid).findFirst();
         if (uuid.isEmpty()) {
             logger.debug("No device found with name {}", devName);
-            return null;
+            return "";
         } else {
             return uuid.get();
         }
