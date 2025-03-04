@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,7 @@ import com.hivemq.client.mqtt.mqtt5.message.subscribe.Mqtt5Subscribe;
  *
  * @author Giovanni Fabiani - Initial contribution
  */
-@NonNullByDefault
+
 public class MerossMqttConnector {
     private final static Logger logger = LoggerFactory.getLogger(MerossMqttConnector.class);
     private static final int SECURE_WEB_SOCKET_PORT = 443;
@@ -134,7 +133,7 @@ public class MerossMqttConnector {
         headerMap.put("sign", signature);
         headerMap.put("timestamp", timestamp);
         headerMap.put("triggerSrc", "Android");
-        headerMap.put("uuid", Objects.requireNonNull(destinationDeviceUUID));
+        headerMap.put("uuid", destinationDeviceUUID);
         dataMap.put("header", headerMap);
         dataMap.put("payload", payload);
         String jsonString = new Gson().toJson(dataMap);

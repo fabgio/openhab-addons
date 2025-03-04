@@ -42,7 +42,7 @@ import com.google.gson.reflect.TypeToken;
 @NonNullByDefault
 public class MerossManager {
     private static final Logger logger = LoggerFactory.getLogger(MerossManager.class);
-    private final MerossHttpConnector merossHttpConnector;
+    final MerossHttpConnector merossHttpConnector;
 
     public MerossManager(MerossHttpConnector merossHttpConnector) {
         this.merossHttpConnector = merossHttpConnector;
@@ -73,13 +73,15 @@ public class MerossManager {
 
     public void executeCommand(String deviceName, String commandType, String commandMode) {
         String uuid = merossHttpConnector.getDevUUIDByDevName(deviceName);
-        if (uuid.isEmpty()) {
+        if (uuid != null && uuid.isEmpty()) {
             logger.error("No device found with name {}", deviceName);
             return;
         }
         initializeMerossMqttConnector();
-        String deviceUUID = Objects.requireNonNull(uuid);
+        String deviceUUID = merossHttpConnector.getDevUUIDByDevName(deviceName);
+
         MerossMqttConnector.setDestinationDeviceUUID(deviceUUID);
+
         String requestTopic = MerossMqttConnector.buildDeviceRequestTopic(deviceUUID);
         ModeFactory modeFactory = TypeFactory.getFactory(commandType);
         Command command = modeFactory.commandMode(commandMode);
@@ -108,7 +110,7 @@ public class MerossManager {
         return jsonElement.get().toString();
     }
 
-    public @Nullable String getSystemAll(String deviceName) {
+    public String getSystemAll(String deviceName) {
         initializeMerossMqttConnector();
         String uuid = merossHttpConnector.getDevUUIDByDevName(deviceName);
         if (uuid != null && uuid.isEmpty()) {
@@ -135,13 +137,10 @@ public class MerossManager {
     private @Nullable HashSet<String> getAbilities(String deviceName) {
         initializeMerossMqttConnector();
         String uuid = merossHttpConnector.getDevUUIDByDevName(deviceName);
-        if (uuid != null && uuid.isEmpty()) {
+        if (uuid.isEmpty()) {
             return null;
         }
-        String requestTopic = null;
-        if (uuid != null) {
-            requestTopic = MerossMqttConnector.buildDeviceRequestTopic(uuid);
-        }
+        String requestTopic = MerossMqttConnector.buildDeviceRequestTopic(uuid);
         byte[] systemAbilityMessage = MerossMqttConnector.buildMqttMessage("GET",
                 MerossEnum.Namespace.SYSTEM_ABILITY.value(), Collections.emptyMap());
         JsonElement digestElement = null;
@@ -155,5 +154,8 @@ public class MerossManager {
         };
         HashMap<String, HashMap<String, String>> abilities = new Gson().fromJson(abilityString, type);
         return new HashSet<>(abilities.keySet());
+    }
+
+    public record data(String uuid) {
     }
 }

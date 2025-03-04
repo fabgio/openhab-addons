@@ -120,14 +120,15 @@ public class MerossHttpConnector {
     /**
      * @return The http response at login request
      */
-    public HttpResponse<String> login() {
+    public @Nullable HttpResponse<String> login() {
         try {
             Map<String, String> loginMap = Map.of("email", userName, "password", password);
-            return Objects.requireNonNull(postResponse(loginMap, apiBaseUrl, MerossEnum.HttpEndpoint.LOGIN.value()));
+            return postResponse(loginMap, apiBaseUrl, MerossEnum.HttpEndpoint.LOGIN.value());
         } catch (MerossException e) {
             logger.debug("Error while login", e);
-            throw new RuntimeException(e);
+
         }
+        return null;
     }
 
     /**
@@ -141,7 +142,7 @@ public class MerossHttpConnector {
      * @param devName The device name
      * @return The device UUID
      */
-    public @Nullable String getDevUUIDByDevName(String devName) {
+    public String getDevUUIDByDevName(String devName) {
         Optional<String> uuid = readDevices().stream().filter(device -> device.devName().equals(devName))
                 .map(Device::uuid).findFirst();
         if (uuid.isEmpty()) {
@@ -165,22 +166,22 @@ public class MerossHttpConnector {
         }
     }
 
-    public String fetchCredentials() {
+    public @Nullable String fetchCredentials() {
         if (apiStatus() != MerossEnum.ApiStatusCode.OK.value()) {
             try {
                 throw new MerossException(MerossEnum.ApiStatusCode.getMessageByApiStatusCode(apiStatus())
                         + " with Error code: " + apiStatus());
             } catch (MerossException e) {
                 logger.debug("Exception caught while fetching credentials {}", e.getMessage());
-                throw new RuntimeException(e);
             }
         } else {
             JsonElement jsonElement = JsonParser.parseString(login().body());
             return jsonElement.getAsJsonObject().get("data").toString();
         }
+        return null;
     }
 
-    public String fetchDevices() {
+    public @Nullable String fetchDevices() {
         CloudCredentials credentials = new Gson().fromJson(fetchCredentials(), CloudCredentials.class);
         String token = credentials.token();
         setToken(token);
@@ -191,8 +192,9 @@ public class MerossHttpConnector {
             return jsonElement.getAsJsonObject().get("data").toString();
         } catch (MerossException e) {
             logger.debug("Exception caught while fetching devices", e);
-            throw new RuntimeException(e);
+
         }
+        return null;
     }
 
     public void fetchCredentialsAndWrite(File credentialFile) {
