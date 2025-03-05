@@ -71,7 +71,7 @@ public class MQTT {
      * @return The client user topic
      */
     public static String buildClientUserTopic() {
-        return "/app/" + getUserId() + "/subscribe";
+        return "/app/" + MQTT.userId + "/subscribe";
     }
 
     public static String buildAppId() {
@@ -88,7 +88,7 @@ public class MQTT {
      * @return The response topic
      */
     public static String buildClientResponseTopic() {
-        return "/app/" + getUserId() + "-" + buildAppId() + "/subscribe";
+        return "/app/" + MQTT.userId + "-" + buildAppId() + "/subscribe";
     }
 
     public static String buildClientId() {
@@ -112,10 +112,6 @@ public class MQTT {
 
     public static void setClientId(String clientId) {
         MQTT.clientId = clientId;
-    }
-
-    public static String getUserId() {
-        return MQTT.userId;
     }
 
     public static void setBrokerAddress(String brokerAddress) {
