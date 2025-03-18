@@ -15,11 +15,8 @@ package org.openhab.binding.meross.internal.handler;
 import static org.openhab.binding.meross.internal.MerossBindingConstants.CHANNEL_TOGGLEX;
 
 import java.io.IOException;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.meross.internal.api.MerossEnum;
 import org.openhab.binding.meross.internal.api.MerossManager;
 import org.openhab.binding.meross.internal.config.MerossLightConfiguration;
@@ -32,6 +29,7 @@ import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
+import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,10 +41,7 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 public class MerossLightHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(MerossLightHandler.class);
-    private static final int REFRESH_TASK_INITIAL_DELAY_SECONDS = 1;
-    private static final int REFRESH_TASK_DELAY_SECONDS = 1;
     private MerossLightConfiguration config = new MerossLightConfiguration();
-    private @Nullable ScheduledFuture<?> refreshTask;
 
     public MerossLightHandler(Thing thing) {
         super(thing);
@@ -70,11 +65,11 @@ public class MerossLightHandler extends BaseThingHandler {
             deviceUUID = connector.getDevUUIDByDevName(config.lightName);
         } catch (IOException e) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
-            logger.debug("Cannot read from file {}", e.getMessage());
+            logger.warn("Cannot read from file {}", e.getMessage());
             return;
         }
         if (deviceUUID.isEmpty()) {
-            logger.debug("No device with name {} ", config.lightName);
+            logger.warn("No device with name {} ", config.lightName);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                     "No device found with name " + config.lightName);
             return;
@@ -83,11 +78,12 @@ public class MerossLightHandler extends BaseThingHandler {
         int onlineStatus;
         try {
             onlineStatus = manager.onlineStatus(config.lightName);
+            initializeThing(onlineStatus);
         } catch (IOException e) {
-            logger.debug("cannot read from file {}", e.getMessage());
+            logger.warn("Cannot get online Status  {}", e.getMessage());
+            updateStatus(ThingStatus.OFFLINE);
             return;
         }
-        initializeThing(onlineStatus);
         initializeBridge(bridge.getStatus());
     }
 
@@ -103,7 +99,6 @@ public class MerossLightHandler extends BaseThingHandler {
     public void initializeBridge(ThingStatus bridgeStatus) {
         if (bridgeStatus == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.ONLINE);
-            startAutomaticRefresh();
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
@@ -118,21 +113,6 @@ public class MerossLightHandler extends BaseThingHandler {
             updateStatus(ThingStatus.OFFLINE);
         } else if (lightStatus == MerossEnum.OnlineStatus.ONLINE.value()) {
             updateStatus(ThingStatus.ONLINE);
-        }
-    }
-
-    private synchronized void updateChannel() {
-        var connector = MerossBridgeHandler.connector;
-        if (connector == null) {
-            logger.debug("MerossHttpConnector is null");
-            return;
-        }
-        var manager = MerossManager.newMerossManager(connector);
-        try {
-            boolean isOn = manager.togglexIsOn(config.lightName);
-            updateState(CHANNEL_TOGGLEX, OnOffType.from(isOn));
-        } catch (IOException e) {
-            logger.debug("Couldn't get on off status {}", e.getMessage());
         }
     }
 
@@ -161,26 +141,18 @@ public class MerossLightHandler extends BaseThingHandler {
                 } catch (IOException e) {
                     logger.debug("cannot execute command {}", e.getMessage());
                 }
+            } else if (command instanceof RefreshType) {
+                try {
+                    boolean isOn = manager.togglexIsOn(config.lightName);
+                    updateState(CHANNEL_TOGGLEX, OnOffType.from(isOn));
+                } catch (IOException e) {
+                    logger.debug("Couldn't get on off status {}", e.getMessage());
+                }
             } else {
                 logger.debug("Unsupported command {} for channel {}", command, channelUID);
             }
         } else {
             logger.debug("Unsupported channelUID {}", channelUID);
         }
-    }
-
-    private void startAutomaticRefresh() {
-        refreshTask = scheduler.scheduleWithFixedDelay(this::updateChannel, REFRESH_TASK_INITIAL_DELAY_SECONDS, REFRESH_TASK_DELAY_SECONDS, TimeUnit.SECONDS);
-    }
-
-    @Override
-    public void dispose() {
-        ScheduledFuture<?> task = refreshTask;
-        if (task != null) {
-            task.cancel(true);
-            refreshTask = null;
-            logger.debug("dispose() refresh task stopped");
-        }
-        super.dispose();
     }
 }

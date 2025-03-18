@@ -125,7 +125,7 @@ public class MerossManager {
                 }
             }
         }
-        return -1;
+        return 4;
     }
 
     public int togglexOnOffStatus(String deviceName) throws IOException {
