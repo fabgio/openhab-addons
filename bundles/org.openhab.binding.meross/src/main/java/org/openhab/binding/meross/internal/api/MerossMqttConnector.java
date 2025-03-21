@@ -12,6 +12,7 @@
  */
 package org.openhab.binding.meross.internal.api;
 
+import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +50,8 @@ public class MerossMqttConnector {
      * @param requestTopic The request topic
      * @return The mqtt response
      */
-    static synchronized @Nullable String publishMqttMessage(byte[] message, String requestTopic) {
+    static synchronized @Nullable String publishMqttMessage(byte[] message, String requestTopic)
+            throws ConnectException {
         String clearPassword = "%s%s".formatted(MqttMessageBuilder.userId, MqttMessageBuilder.key);
         String hashedPassword = MD5Util.getMD5String(clearPassword);
 
@@ -63,7 +65,7 @@ public class MerossMqttConnector {
         if (connAck.getReasonCode().getCode() != Mqtt5ConnAckReasonCode.SUCCESS.getCode()) {
             if (connAck.getReasonString().isPresent()) {
                 logger.debug("Connection failed: {}", connAck.getReasonString().get());
-                return null;
+                throw new ConnectException("Connection failed" + connAck.getReasonString());
             }
         }
 

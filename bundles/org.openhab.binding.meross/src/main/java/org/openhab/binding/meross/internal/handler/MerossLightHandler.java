@@ -65,7 +65,7 @@ public class MerossLightHandler extends BaseThingHandler {
             deviceUUID = connector.getDevUUIDByDevName(config.lightName);
         } catch (IOException e) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
-            logger.warn("Cannot read from file {}", e.getMessage());
+            logger.warn("Cannot get device UUID  {}", e.getMessage());
             return;
         }
         if (deviceUUID.isEmpty()) {

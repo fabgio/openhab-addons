@@ -13,6 +13,7 @@
 package org.openhab.binding.meross.internal.api;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
